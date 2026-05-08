@@ -93,6 +93,7 @@ export interface TaskDiagnosisResult {
   actionItems: string[];
   promptExample: string;
   hasSensitivity: boolean;
+  doNotInput: string;
 }
 
 export interface DiagnosisResult {
