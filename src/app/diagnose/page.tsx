@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,9 +50,11 @@ import {
   OUTPUTS,
   PAIN_POINTS
 } from '@/lib/constants';
-import { AIToolId, FrequencyId, CategoryId, ConfidentialityLevel } from '@/lib/types';
+import { AIToolId, FrequencyId, CategoryId, ConfidentialityLevel, DiagnosisData } from '@/lib/types';
+import { generateDiagnosisReport } from '@/lib/reportGenerator';
 
 // バリデーションスキーマの定義 (Step別のチェックを含む)
+// ... (schema definition remains the same)
 const schema = z.object({
   basicInfo: z.object({
     name: z.string().min(1, '氏名を入力してください'),
@@ -125,6 +128,7 @@ const STEPS = [
 ];
 
 export default function DiagnosePage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [showStepError, setShowStepError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -188,8 +192,14 @@ export default function DiagnosePage() {
   };
 
   const onSubmit = (data: FormValues) => {
-    alert('診断レポートの生成を開始します。');
-    console.log('Final Data:', data);
+    // 1. 診断結果を生成
+    const result = generateDiagnosisReport(data as DiagnosisData);
+    
+    // 2. localStorageに保存
+    localStorage.setItem('diagnosis_result', JSON.stringify(result));
+    
+    // 3. /report に遷移
+    router.push('/report');
   };
 
   // 業務追加（自動分類付き）

@@ -1,51 +1,73 @@
-import { DiagnosisData, DiagnosisResult, TaskItem } from './types';
+import { DiagnosisData, DiagnosisResult, TaskItem, TaskDiagnosisResult, AIToolId, CategoryId } from './types';
 import { FREQUENCIES, REDUCTION_RATES } from './constants';
 
 /**
- * 特定のタスクの削減時間を計算する
+ * AIによる削減時間の計算
  */
 export const calculateTaskSavings = (task: TaskItem) => {
-  const reductionRate = REDUCTION_RATES[task.categoryId] || 0.2;
+  const baseRate = REDUCTION_RATES[task.categoryId] || 0.2;
   const monthlyMultiplier = FREQUENCIES[task.frequencyId].monthlyMultiplier;
   
-  const savingsPerTime = task.hoursPerTime * reductionRate;
-  const monthlySavings = savingsPerTime * monthlyMultiplier;
-  const yearlySavings = monthlySavings * 12;
-
-  // 1-5のスコアを計算（削減時間が長いほど高スコアとする簡易ロジック）
-  let score = 1;
-  if (monthlySavings > 10) score = 5;
-  else if (monthlySavings > 5) score = 4;
-  else if (monthlySavings > 2) score = 3;
-  else if (monthlySavings > 0.5) score = 2;
+  const savingsPerTime = task.hoursPerTime * baseRate;
+  const savingsMonthly = savingsPerTime * monthlyMultiplier;
+  const savingsYearly = savingsMonthly * 12;
 
   return {
-    monthlySavings,
-    yearlySavings,
-    score,
+    savingsPerTime,
+    savingsMonthly,
+    savingsYearly,
   };
 };
 
 /**
- * 全体の診断結果を計算する
+ * 業務に対するAI活用ポテンシャルスコアの算出 (1-5)
  */
-export const calculateDiagnosis = (data: DiagnosisData): DiagnosisResult => {
-  const taskResults = data.tasks.map((task) => {
-    const { monthlySavings, yearlySavings, score } = calculateTaskSavings(task);
-    return {
-      taskId: task.id,
-      savingsMonthly: monthlySavings,
-      savingsYearly: yearlySavings,
-      score,
-    };
-  });
+export const calculateTaskScore = (task: TaskItem): number => {
+  let score = 3; // デフォルト: 一部活用できる
 
-  const totalSavingsMonthly = taskResults.reduce((sum, res) => sum + res.savingsMonthly, 0);
-  const totalSavingsYearly = taskResults.reduce((sum, res) => sum + res.savingsYearly, 0);
+  // カテゴリによる補正
+  const highPotentialCategories: CategoryId[] = ['document', 'meeting', 'material', 'planning'];
+  if (highPotentialCategories.includes(task.categoryId)) score += 1;
 
-  return {
-    totalSavingsMonthly,
-    totalSavingsYearly,
-    taskResults,
-  };
+  // 機密情報・リスクによる補正
+  if (task.confidentiality === '多く含む') score -= 2;
+  else if (task.confidentiality === '一部あり') score -= 1;
+
+  // 特定カテゴリのリスク補正
+  const riskyCategories: CategoryId[] = ['hr', 'accounting', 'others'];
+  if (riskyCategories.includes(task.categoryId)) score -= 1;
+
+  return Math.max(1, Math.min(5, score));
+};
+
+/**
+ * おすすめAIツールの判定
+ */
+export const recommendTools = (task: TaskItem, selectedTools: AIToolId[]): AIToolId[] => {
+  const recommendations: AIToolId[] = [];
+
+  // カテゴリと選択済みツールに基づく判定
+  const chatGptSuited: CategoryId[] = ['document', 'info_gathering', 'planning', 'education', 'data_analysis'];
+  const copilotSuited: CategoryId[] = ['material', 'data_organization', 'meeting'];
+  
+  // ユーザーが選択しているツールの中から最適なものを選ぶ
+  if (selectedTools.includes('chatgpt') && chatGptSuited.includes(task.categoryId)) {
+    recommendations.push('chatgpt');
+  }
+  
+  if (selectedTools.includes('copilot') && (copilotSuited.includes(task.categoryId) || task.tools?.includes('Word') || task.tools?.includes('Excel'))) {
+    recommendations.push('copilot');
+  }
+
+  if (selectedTools.includes('gemini') && (task.tools?.includes('Gmail') || task.tools?.includes('Google Docs'))) {
+    recommendations.push('gemini');
+  }
+
+  // 何も該当しない場合は、選択ツールの中から先頭を表示、またはChatGPTを推奨
+  if (recommendations.length === 0) {
+    if (selectedTools.length > 0) recommendations.push(selectedTools[0]);
+    else recommendations.push('chatgpt');
+  }
+
+  return recommendations;
 };

@@ -38,7 +38,7 @@ export type ConfidentialityLevel = 'なし' | '一部あり' | '多く含む' | 
 
 export interface BasicInfo {
   name: string;
-  companyName: string; // 必須に変更
+  companyName: string;
   departmentName?: string;
   role: Role;
   otherRoleText?: string;
@@ -59,11 +59,11 @@ export interface TaskItem {
   categoryId: CategoryId;
   hoursPerTime: number; 
   frequencyId: FrequencyId;
-  outputs: string[]; // 複数選択に変更
+  outputs: string[];
   otherOutputText?: string;
-  tools: string[]; // 複数選択に変更
+  tools: string[];
   otherToolsText?: string;
-  painPoints: string[]; // 複数選択に変更
+  painPoints: string[];
   otherPainPointsText?: string;
   confidentiality: ConfidentialityLevel;
   notes?: string;
@@ -76,13 +76,36 @@ export interface DiagnosisData {
   tasks: TaskItem[];
 }
 
+export interface TaskDiagnosisResult {
+  taskId: string;
+  title: string;
+  categoryId: CategoryId;
+  savingsMonthly: number;
+  savingsYearly: number;
+  savingsPerTime: number;
+  score: number; // 1-5
+  recommendedTools: AIToolId[];
+  advice: string;
+  qualityPointers: string[];
+  precautions: string[];
+  actionItems: string[];
+  promptExample: string;
+}
+
 export interface DiagnosisResult {
-  totalSavingsMonthly: number;
-  totalSavingsYearly: number;
-  taskResults: {
-    taskId: string;
-    savingsMonthly: number;
-    savingsYearly: number;
-    score: number;
-  }[];
+  inputData: DiagnosisData; // 入力データを保持
+  generatedAt: string;
+  overallScore: number;
+  overallComment: string;
+  kpis: {
+    totalTasks: number;
+    highPotentialTasks: number;
+    totalSavingsMonthly: number;
+    totalSavingsYearly: number;
+    totalSavingsPerTime: number;
+  };
+  taskResults: TaskDiagnosisResult[];
+  categoryDistribution: { name: string; value: number }[];
+  radarData: { subject: string; A: number; fullMark: number }[];
+  actionPlan: string[];
 }
