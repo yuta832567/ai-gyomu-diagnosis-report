@@ -4,6 +4,10 @@ export type CompanySize = '1〜10名' | '11〜50名' | '51〜300名' | '301名�
 
 export type AIExperience = '未経験' | '少し使ったことがある' | '業務で使っている';
 
+export type AIUsageFrequency = 'ほぼ使っていない' | '月に数回使っている' | '週に数回使っている' | 'ほぼ毎日使っている';
+
+export type CompanyAIRule = '特に決まっていない' | '社内ルールがある' | '業務利用は禁止されている' | 'わからない';
+
 export type AIToolId = 'chatgpt' | 'copilot' | 'gemini';
 
 export type CategoryId =
@@ -34,14 +38,19 @@ export type ConfidentialityLevel = 'なし' | '一部あり' | '多く含む' | 
 
 export interface BasicInfo {
   name: string;
-  companyName?: string;
+  companyName: string; // 必須に変更
   departmentName?: string;
   role: Role;
+  otherRoleText?: string;
   industry: string;
   companySize: CompanySize;
   aiExperience: AIExperience;
-  toolsUsed: string[]; // 新規追加
-  expectations: string[]; // 新規追加
+  aiUsageFrequency: AIUsageFrequency;
+  companyAIRules: CompanyAIRule;
+  toolsUsed: string[];
+  otherToolsText?: string;
+  expectations: string[];
+  otherExpectationsText?: string;
 }
 
 export interface TaskItem {
@@ -50,17 +59,20 @@ export interface TaskItem {
   categoryId: CategoryId;
   hoursPerTime: number; 
   frequencyId: FrequencyId;
-  output?: string; // 新規追加
-  tools?: string; // 新規追加
-  painPoint?: string;
-  confidentiality: ConfidentialityLevel; // 変更: boolean -> string
-  notes?: string; // 新規追加
+  outputs: string[]; // 複数選択に変更
+  otherOutputText?: string;
+  tools: string[]; // 複数選択に変更
+  otherToolsText?: string;
+  painPoints: string[]; // 複数選択に変更
+  otherPainPointsText?: string;
+  confidentiality: ConfidentialityLevel;
+  notes?: string;
 }
 
 export interface DiagnosisData {
   basicInfo: BasicInfo;
   selectedTools: AIToolId[];
-  toolPlans: Record<AIToolId, string>; // 新規追加: ツールごとのプラン
+  toolPlans: Record<AIToolId, string>;
   tasks: TaskItem[];
 }
 
@@ -71,6 +83,6 @@ export interface DiagnosisResult {
     taskId: string;
     savingsMonthly: number;
     savingsYearly: number;
-    score: number; // 1-5
+    score: number;
   }[];
 }

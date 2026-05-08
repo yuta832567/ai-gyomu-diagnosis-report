@@ -1,4 +1,14 @@
-import { CategoryId, FrequencyId, AIToolId, Role, CompanySize, AIExperience, ConfidentialityLevel } from './types';
+import { 
+  CategoryId, 
+  FrequencyId, 
+  AIToolId, 
+  Role, 
+  CompanySize, 
+  AIExperience, 
+  AIUsageFrequency, 
+  CompanyAIRule, 
+  ConfidentialityLevel 
+} from './types';
 
 export const ROLES: Role[] = ['経営者', '役員', '管理職', '一般従業員', '研修受講者', 'その他'];
 
@@ -6,9 +16,37 @@ export const COMPANY_SIZES: CompanySize[] = ['1〜10名', '11〜50名', '51〜30
 
 export const AI_EXPERIENCES: AIExperience[] = ['未経験', '少し使ったことがある', '業務で使っている'];
 
-export const TOOLS_USED = [
-  'Word', 'Excel', 'PowerPoint', 'Outlook', 'Teams', 
-  'Gmail', 'Google Docs', 'Google Sheets', 'Google Slides', 'その他'
+export const AI_USAGE_FREQUENCIES: AIUsageFrequency[] = [
+  'ほぼ使っていない',
+  '月に数回使っている',
+  '週に数回使っている',
+  'ほぼ毎日使っている'
+];
+
+export const COMPANY_AI_RULES: CompanyAIRule[] = [
+  '特に決まっていない',
+  '社内ルールがある',
+  '業務利用は禁止されている',
+  'わからない'
+];
+
+export const TOOLS_USED_GROUPS = [
+  {
+    label: 'Microsoft系',
+    tools: ['Word', 'Excel', 'PowerPoint', 'Outlook', 'Teams', 'OneDrive / SharePoint']
+  },
+  {
+    label: 'Google系',
+    tools: ['Gmail', 'Google Docs', 'Google Sheets', 'Google Slides', 'Google Drive', 'Google Meet']
+  },
+  {
+    label: 'コミュニケーション',
+    tools: ['Zoom', 'Slack', 'Chatwork']
+  },
+  {
+    label: 'その他業務ツール',
+    tools: ['Notion', 'Canva', '会計・経理ソフト', 'CRM / SFA', 'その他']
+  }
 ];
 
 export const EXPECTATIONS = [
@@ -17,7 +55,13 @@ export const EXPECTATIONS = [
   '資料や文章の質を上げたい',
   'アイデア出しに使いたい',
   'データ分析に使いたい',
-  '業務の属人化を減らしたい'
+  '業務の属人化を減らしたい',
+  '情報収集を効率化したい',
+  '会議や議事録を効率化したい',
+  '顧客対応の品質を上げたい',
+  '社内ナレッジを整理したい',
+  'AIで何ができるか知りたい',
+  'その他'
 ];
 
 export const AI_TOOLS: { id: AIToolId; label: string; description: string; tags: string[] }[] = [
@@ -41,22 +85,37 @@ export const AI_TOOLS: { id: AIToolId; label: string; description: string; tags:
   },
 ];
 
-export const AI_PLANS: Record<AIToolId, string[]> = {
-  chatgpt: ['Free', 'Go', 'Plus', 'Pro', 'Business', 'Enterprise', 'わからない'],
+export interface PlanMetadata {
+  label: string;
+  description: string;
+  diagnosisNote: string;
+  isBusiness: boolean;
+}
+
+export const AI_PLANS_METADATA: Record<AIToolId, PlanMetadata[]> = {
+  chatgpt: [
+    { label: 'Free', description: '体験・軽作業向け。', diagnosisNote: '業務利用では一部機能に制限がある可能性があります。', isBusiness: false },
+    { label: 'Go', description: '個人利用の実用ライン。', diagnosisNote: '基本的な業務活用を想定します。', isBusiness: false },
+    { label: 'Plus', description: '高度なモデルを利用可能。', diagnosisNote: '実務での本格利用を想定します。', isBusiness: false },
+    { label: 'Pro', description: 'より高速・高機能な個人向け。', diagnosisNote: '高度な実務活用を想定します。', isBusiness: false },
+    { label: 'Business', description: '企業利用向け。', diagnosisNote: '業務利用や管理面を考慮した提案を行います。', isBusiness: true },
+    { label: 'Enterprise', description: '大規模組織向け。', diagnosisNote: '高度なセキュリティと管理機能を前提とします。', isBusiness: true },
+    { label: 'わからない', description: 'プラン不明。', diagnosisNote: '一般的な条件で注意付き診断を行います。', isBusiness: false },
+  ],
   copilot: [
-    'Copilot Chatのみ',
-    'Microsoft 365 Business Standardのみ',
-    'Business Standard + Microsoft 365 Copilot',
-    'その他Microsoft 365プラン + Copilot',
-    'わからない'
+    { label: 'Copilot Chatのみ', description: 'ブラウザ上でのAIチャット利用。', diagnosisNote: '基本的なテキスト処理を想定します。', isBusiness: false },
+    { label: 'Microsoft 365 Business Standardのみ', description: 'Officeアプリのみ（AIなし）。', diagnosisNote: 'AI未導入状態として診断します。', isBusiness: false },
+    { label: 'Business Standard + Microsoft 365 Copilot', description: 'Officeアプリ連携AI。', diagnosisNote: 'Office業務の自動化を最大限考慮します。', isBusiness: true },
+    { label: 'その他Microsoft 365プラン + Copilot', description: 'エンタープライズ等。', diagnosisNote: '企業環境での高度な連携を想定します。', isBusiness: true },
+    { label: 'わからない', description: 'プラン不明。', diagnosisNote: '一般的な条件で注意付き診断を行います。', isBusiness: false },
   ],
   gemini: [
-    '無料版',
-    'Google AIプラン',
-    'Google Workspace Business Starter',
-    'Google Workspace Business Standard以上',
-    'Google Workspace Business Plus / Enterprise',
-    'わからない'
+    { label: '無料版', description: '体験・個人利用。', diagnosisNote: '基本的な機能を前提とします。', isBusiness: false },
+    { label: 'Google AIプラン', description: '個人向けプレミアム。', diagnosisNote: '高度なモデル利用を想定します。', isBusiness: false },
+    { label: 'Google Workspace Business Starter', description: '小規模ビジネス向け。', diagnosisNote: '基本的なWorkspace連携を想定します。', isBusiness: true },
+    { label: 'Google Workspace Business Standard以上', description: '標準ビジネス向け。', diagnosisNote: '実務での高度な連携を想定します。', isBusiness: true },
+    { label: 'Google Workspace Business Plus / Enterprise', description: '大規模・高機能。', diagnosisNote: '高度な管理機能と連携を想定します。', isBusiness: true },
+    { label: 'わからない', description: 'プラン不明。', diagnosisNote: '一般的な条件で注意付き診断を行います。', isBusiness: false },
   ]
 };
 
@@ -76,10 +135,30 @@ export const CATEGORIES: { id: CategoryId; label: string; description: string; }
   { id: 'others', label: 'その他', description: 'その他の業務' },
 ];
 
-export const TASK_SUGGESTIONS = [
-  'メール作成・返信', '会議議事録作成', '提案資料作成', 'Excel集計', 
-  'アンケート分析', '顧客対応文作成', 'マニュアル作成', '研修資料作成', 
-  '情報収集', 'アイデア出し', '報告書作成', 'FAQ作成'
+export const TASK_SUGGESTIONS: { title: string; categoryId: CategoryId }[] = [
+  { title: 'メール作成・返信', categoryId: 'document' },
+  { title: '会議議事録作成', categoryId: 'meeting' },
+  { title: '提案資料作成', categoryId: 'material' },
+  { title: 'Excel集計', categoryId: 'data_organization' },
+  { title: 'アンケート分析', categoryId: 'data_analysis' },
+  { title: '顧客対応文作成', categoryId: 'customer_support' },
+  { title: 'マニュアル作成', categoryId: 'document' },
+  { title: '研修資料作成', categoryId: 'education' },
+  { title: '情報収集', categoryId: 'info_gathering' },
+  { title: 'アイデア出し', categoryId: 'planning' },
+  { title: '報告書作成', categoryId: 'document' },
+  { title: 'FAQ作成', categoryId: 'customer_support' },
+];
+
+export const OUTPUTS = [
+  'メール', '資料', '表・データ', '議事録', '報告書', 
+  'マニュアル', 'アイデア', '分析結果', '顧客対応文', 'その他'
+];
+
+export const PAIN_POINTS = [
+  '時間がかかる', '誤字脱字が不安', '構成を考えるのが難しい', 
+  '抜け漏れが不安', '分析や整理が大変', '毎回同じ作業をしている', 
+  '品質にばらつきがある', 'その他'
 ];
 
 export const FREQUENCIES: Record<FrequencyId, { label: string; monthlyMultiplier: number }> = {
@@ -91,16 +170,6 @@ export const FREQUENCIES: Record<FrequencyId, { label: string; monthlyMultiplier
   monthly_1: { label: '月1回', monthlyMultiplier: 1 },
   yearly_few: { label: '年数回', monthlyMultiplier: 0.25 },
 };
-
-export const PAIN_POINTS = [
-  '時間がかかる',
-  '誤字脱字が不安',
-  '構成を考えるのが難しい',
-  '抜け漏れが不安',
-  '分析や整理が大変',
-  '毎回同じ作業をしている',
-  '品質にばらつきがある'
-];
 
 export const CONFIDENTIALITY_LEVELS: ConfidentialityLevel[] = ['なし', '一部あり', '多く含む', 'わからない'];
 
