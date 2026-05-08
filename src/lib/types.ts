@@ -86,10 +86,13 @@ export interface TaskDiagnosisResult {
   score: number; // 1-5
   recommendedTools: AIToolId[];
   advice: string;
+  aiRole: string;
+  humanRole: string;
   qualityPointers: string[];
   precautions: string[];
   actionItems: string[];
   promptExample: string;
+  hasSensitivity: boolean;
 }
 
 export interface DiagnosisResult {
@@ -108,4 +111,5 @@ export interface DiagnosisResult {
   categoryDistribution: { name: string; value: number }[];
   radarData: { subject: string; A: number; fullMark: number }[];
   actionPlan: string[];
+  sensitiveTasks: string[]; // 注意が必要な業務タイトルのリスト
 }
