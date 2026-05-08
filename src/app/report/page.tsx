@@ -25,7 +25,10 @@ import {
   ChevronRight,
   Printer,
   Info,
-  Laptop
+  Laptop,
+  Briefcase,
+  Target,
+  BarChart3 as BarChartIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DiagnosisResult, AIToolId, TaskDiagnosisResult } from '@/lib/types';
@@ -215,7 +218,7 @@ export default function ReportPage() {
             className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm"
           >
             <h3 className="text-lg font-black text-slate-800 mb-8 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-cyan-500" />
+              <BarChartIcon className="w-5 h-5 text-cyan-500" />
               業務別の月間削減時間
             </h3>
             <div className="h-64 w-full">

@@ -67,9 +67,9 @@ const schema = z.object({
     aiExperience: z.enum(AI_EXPERIENCES as [string, ...string[]]),
     aiUsageFrequency: z.enum(AI_USAGE_FREQUENCIES as [string, ...string[]]),
     companyAIRules: z.enum(COMPANY_AI_RULES as [string, ...string[]]),
-    toolsUsed: z.array(z.string()).default([]),
+    toolsUsed: z.array(z.string()),
     otherToolsText: z.string().optional(),
-    expectations: z.array(z.string()).default([]),
+    expectations: z.array(z.string()),
     otherExpectationsText: z.string().optional(),
   }).superRefine((val, ctx) => {
     if (val.role === 'その他' && (!val.otherRoleText || val.otherRoleText.trim() === '')) {
@@ -83,18 +83,18 @@ const schema = z.object({
     }
   }),
   selectedTools: z.array(z.string()).min(1, '診断に使うAIツールを1つ以上選んでください。'),
-  toolPlans: z.record(z.string(), z.string()).default({}),
+  toolPlans: z.record(z.string(), z.string()),
   tasks: z.array(z.object({
     id: z.string(),
     title: z.string().min(1, '業務名を入力してください'),
     categoryId: z.string().min(1, 'カテゴリを選択してください'),
     hoursPerTime: z.number().min(0.1, '作業時間を入力してください'),
     frequencyId: z.string().min(1, '頻度を選択してください'),
-    outputs: z.array(z.string()).default([]),
+    outputs: z.array(z.string()),
     otherOutputText: z.string().optional(),
-    tools: z.array(z.string()).default([]),
+    tools: z.array(z.string()),
     otherToolsText: z.string().optional(),
-    painPoints: z.array(z.string()).default([]),
+    painPoints: z.array(z.string()),
     otherPainPointsText: z.string().optional(),
     confidentiality: z.enum(CONFIDENTIALITY_LEVELS as [string, ...string[]]),
     notes: z.string().optional(),
@@ -138,6 +138,9 @@ export default function DiagnosePage() {
     mode: 'onBlur',
     defaultValues: {
       basicInfo: {
+        name: '',
+        companyName: '',
+        industry: '',
         role: '一般従業員',
         companySize: '11〜50名',
         aiExperience: '少し使ったことがある',
