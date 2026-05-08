@@ -1,4 +1,4 @@
-import { CategoryId, FrequencyId, AIToolId, Role, CompanySize, AIExperience } from './types';
+import { CategoryId, FrequencyId, AIToolId, Role, CompanySize, AIExperience, ConfidentialityLevel } from './types';
 
 export const ROLES: Role[] = ['経営者', '役員', '管理職', '一般従業員', '研修受講者', 'その他'];
 
@@ -6,28 +6,80 @@ export const COMPANY_SIZES: CompanySize[] = ['1〜10名', '11〜50名', '51〜30
 
 export const AI_EXPERIENCES: AIExperience[] = ['未経験', '少し使ったことがある', '業務で使っている'];
 
-export const CATEGORIES: { id: CategoryId; label: string; description: string; suggestions: string[] }[] = [
-  { id: 'material', label: '資料作成', description: 'スライド、チラシ、提案資料など', suggestions: ['プレゼン構成案作成', '営業資料の下書き'] },
-  { id: 'document', label: '文書作成', description: 'メール、報告書、議事録清書など', suggestions: ['お礼メール作成', '週報の下書き作成'] },
-  { id: 'info_gathering', label: '情報収集', description: 'リサーチ、競合調査など', suggestions: ['業界トレンド調査', '特定トピックの要約'] },
-  { id: 'data_organization', label: 'データ整理', description: 'Excel整形、リスト作成など', suggestions: ['名簿の整理', 'データのクレンジング'] },
-  { id: 'data_analysis', label: 'データ分析', description: '数値分析、傾向把握など', suggestions: ['売上データの分析', 'アンケートの集計分析'] },
-  { id: 'meeting', label: '会議関連', description: 'アジェンダ作成、録音の要約など', suggestions: ['会議アジェンダ作成', '議事録の要約'] },
-  { id: 'customer_support', label: '顧客対応', description: '問い合わせ返信、FAQ作成など', suggestions: ['FAQ下書き作成', 'クレーム対応文面案'] },
-  { id: 'sales', label: '営業活動', description: 'テレアポ台本、顧客リサーチなど', suggestions: ['営業スクリプト作成', '訪問先企業の事前調査'] },
-  { id: 'planning', label: '企画・アイデア出し', description: '新規事業、キャンペーン企画など', suggestions: ['キャッチコピー案作成', '新商品の企画案'] },
-  { id: 'hr', label: '人事・採用', description: '求人票、面接質問作成など', suggestions: ['求人票の作成', '面接評価シートの作成'] },
-  { id: 'accounting', label: '経理・総務', description: '規程作成、経費チェックなど', suggestions: ['社内規定の下書き', '福利厚生案の作成'] },
-  { id: 'education', label: '教育・研修', description: 'マニュアル作成、研修カリキュラムなど', suggestions: ['業務マニュアル作成', '研修資料の構成案'] },
-  { id: 'others', label: 'その他', description: 'その他の業務', suggestions: [] },
+export const TOOLS_USED = [
+  'Word', 'Excel', 'PowerPoint', 'Outlook', 'Teams', 
+  'Gmail', 'Google Docs', 'Google Sheets', 'Google Slides', 'その他'
 ];
 
-export const AI_TOOLS: { id: AIToolId; label: string; description: string }[] = [
-  { id: 'chatgpt', label: 'ChatGPT', description: 'OpenAIが提供するAIチャット' },
-  { id: 'copilot_chat', label: 'Copilot Chat', description: 'Microsoftの基本AIチャット' },
-  { id: 'copilot_m365', label: 'Microsoft 365 Copilot', description: 'Officeアプリと連携するAI' },
-  { id: 'gemini_chat', label: 'Gemini Chat', description: 'Googleの基本AIチャット' },
-  { id: 'gemini_gw', label: 'Gemini for Google Workspace', description: 'Google Workspaceと連携するAI' },
+export const EXPECTATIONS = [
+  '作業時間を減らしたい',
+  '誤字脱字やミスを減らしたい',
+  '資料や文章の質を上げたい',
+  'アイデア出しに使いたい',
+  'データ分析に使いたい',
+  '業務の属人化を減らしたい'
+];
+
+export const AI_TOOLS: { id: AIToolId; label: string; description: string; tags: string[] }[] = [
+  { 
+    id: 'chatgpt', 
+    label: 'ChatGPT', 
+    description: 'OpenAIが提供する世界で最も有名なAI',
+    tags: ['文章作成', '壁打ち', 'ファイル読解', 'データ分析', '画像生成']
+  },
+  { 
+    id: 'copilot', 
+    label: 'Copilot', 
+    description: 'Microsoft 365と深く連携するビジネスAI',
+    tags: ['Word', 'Excel', 'PowerPoint', 'Outlook', 'Teams']
+  },
+  { 
+    id: 'gemini', 
+    label: 'Gemini', 
+    description: 'Googleのエコシステムと連携する強力なAI',
+    tags: ['Gmail', 'Google Docs', 'Sheets', 'Slides', 'Drive']
+  },
+];
+
+export const AI_PLANS: Record<AIToolId, string[]> = {
+  chatgpt: ['Free', 'Go', 'Plus', 'Pro', 'Business', 'Enterprise', 'わからない'],
+  copilot: [
+    'Copilot Chatのみ',
+    'Microsoft 365 Business Standardのみ',
+    'Business Standard + Microsoft 365 Copilot',
+    'その他Microsoft 365プラン + Copilot',
+    'わからない'
+  ],
+  gemini: [
+    '無料版',
+    'Google AIプラン',
+    'Google Workspace Business Starter',
+    'Google Workspace Business Standard以上',
+    'Google Workspace Business Plus / Enterprise',
+    'わからない'
+  ]
+};
+
+export const CATEGORIES: { id: CategoryId; label: string; description: string; }[] = [
+  { id: 'material', label: '資料作成', description: 'スライド、チラシ、提案資料など' },
+  { id: 'document', label: '文書作成', description: 'メール、報告書、議事録清書など' },
+  { id: 'info_gathering', label: '情報収集', description: 'リサーチ、競合調査など' },
+  { id: 'data_organization', label: 'データ整理', description: 'Excel整形、リスト作成など' },
+  { id: 'data_analysis', label: 'データ分析', description: '数値分析、傾向把握など' },
+  { id: 'meeting', label: '会議関連', description: 'アジェンダ作成、録音の要約など' },
+  { id: 'customer_support', label: '顧客対応', description: '問い合わせ返信、FAQ作成など' },
+  { id: 'sales', label: '営業活動', description: 'テレアポ台本、顧客リサーチなど' },
+  { id: 'planning', label: '企画・アイデア出し', description: '新規事業、キャンペーン企画など' },
+  { id: 'hr', label: '人事・採用', description: '求人票、面接質問作成など' },
+  { id: 'accounting', label: '経理・総務', description: '規程作成、経費チェックなど' },
+  { id: 'education', label: '教育・研修', description: 'マニュアル作成、研修カリキュラムなど' },
+  { id: 'others', label: 'その他', description: 'その他の業務' },
+];
+
+export const TASK_SUGGESTIONS = [
+  'メール作成・返信', '会議議事録作成', '提案資料作成', 'Excel集計', 
+  'アンケート分析', '顧客対応文作成', 'マニュアル作成', '研修資料作成', 
+  '情報収集', 'アイデア出し', '報告書作成', 'FAQ作成'
 ];
 
 export const FREQUENCIES: Record<FrequencyId, { label: string; monthlyMultiplier: number }> = {
@@ -40,7 +92,18 @@ export const FREQUENCIES: Record<FrequencyId, { label: string; monthlyMultiplier
   yearly_few: { label: '年数回', monthlyMultiplier: 0.25 },
 };
 
-// カテゴリごとのデフォルト削減率（モック用）
+export const PAIN_POINTS = [
+  '時間がかかる',
+  '誤字脱字が不安',
+  '構成を考えるのが難しい',
+  '抜け漏れが不安',
+  '分析や整理が大変',
+  '毎回同じ作業をしている',
+  '品質にばらつきがある'
+];
+
+export const CONFIDENTIALITY_LEVELS: ConfidentialityLevel[] = ['なし', '一部あり', '多く含む', 'わからない'];
+
 export const REDUCTION_RATES: Record<CategoryId, number> = {
   material: 0.4,
   document: 0.5,

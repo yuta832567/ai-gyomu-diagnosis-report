@@ -4,7 +4,7 @@ export type CompanySize = '1〜10名' | '11〜50名' | '51〜300名' | '301名�
 
 export type AIExperience = '未経験' | '少し使ったことがある' | '業務で使っている';
 
-export type AIToolId = 'chatgpt' | 'copilot_chat' | 'copilot_m365' | 'gemini_chat' | 'gemini_gw';
+export type AIToolId = 'chatgpt' | 'copilot' | 'gemini';
 
 export type CategoryId =
   | 'material'
@@ -30,6 +30,8 @@ export type FrequencyId =
   | 'monthly_1'
   | 'yearly_few';
 
+export type ConfidentialityLevel = 'なし' | '一部あり' | '多く含む' | 'わからない';
+
 export interface BasicInfo {
   name: string;
   companyName?: string;
@@ -38,21 +40,27 @@ export interface BasicInfo {
   industry: string;
   companySize: CompanySize;
   aiExperience: AIExperience;
+  toolsUsed: string[]; // 新規追加
+  expectations: string[]; // 新規追加
 }
 
 export interface TaskItem {
   id: string;
   title: string;
   categoryId: CategoryId;
-  hoursPerTime: number; // 1回あたりの時間（時間単位）
+  hoursPerTime: number; 
   frequencyId: FrequencyId;
+  output?: string; // 新規追加
+  tools?: string; // 新規追加
   painPoint?: string;
-  hasConfidentialInfo: boolean;
+  confidentiality: ConfidentialityLevel; // 変更: boolean -> string
+  notes?: string; // 新規追加
 }
 
 export interface DiagnosisData {
   basicInfo: BasicInfo;
   selectedTools: AIToolId[];
+  toolPlans: Record<AIToolId, string>; // 新規追加: ツールごとのプラン
   tasks: TaskItem[];
 }
 
