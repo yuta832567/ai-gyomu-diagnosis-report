@@ -1,5 +1,8 @@
 # AI業務活用診断レポート 開発メモ
 
+## プロジェクト概要
+AIツール（ChatGPT, Copilot, Gemini）を業務にどう活用できるかを診断し、月間の削減時間や具体的な活用アクションを提案するWebアプリケーション。
+
 ## 現在の実装状況
 - [x] 診断フォーム (Step 1-5) の完成
 - [x] 診断ロジック (reportGenerator) の実装
@@ -8,40 +11,61 @@
 - [x] 共有URL (/report/[shareId]) による閲覧機能
 - [x] localStorage によるオフライン・保存失敗時のフォールバック
 
-## Supabase保存の仕様
-### テーブル: `diagnoses`
-- `share_id`: `rpt_` から始まるランダム文字列。共有URLに使用。
-- `is_public`: true のもののみ外部から閲覧可能。
-- `input_data`, `report_data`: JSONB形式で全データを保存。
-- 分析用個別カラム: `name`, `company_name`, `role`, `industry`, `company_size` など。
+### 診断フォーム (/diagnose)
+- 5ステップ構成。
+- 各ステップでのバリデーション実装済み。
+- 「その他」選択時の入力フィールド復元済み。
+- 業務候補チップの追加・重複防止機能。
 
-### 保存ロジック
-1. クライアント側で `share_id` を生成。
-2. `localStorage` に保存（即時性確保）。
-3. Supabase に `insert`。
-4. 成功時は `/report/[shareId]` へ、失敗時は `/report`（localStorage参照）へ遷移。
+### レポート画面 (/report)
+- `ReportView` コンポーネントによる一貫したデザイン。
+- KPI表示（月間/年間削減時間）、削減効果ランキング。
+- 業務別AI活用ガイド（プロンプト例、品質向上ポイント等）。
+- PDF保存、共有リンクコピー、プロンプトコピー機能。
 
-## /report と /report/[shareId] の違い
-- **/report**: `localStorage` に保存された「最新の診断結果」を表示。別端末やシークレットウィンドウでは閲覧不可。
-- **/report/[shareId]**: Supabase DB から取得した「特定の診断結果」を表示。URLを知っている人は誰でも閲覧可能。
+## Supabase保存機能の仕様
+- 保存タイミング: Step 5 の「診断レポートを生成する」クリック時。
+- 保存先: `diagnoses` テーブル。
+- 認証: `anon` ロールによる `INSERT` および `is_public = true` の `SELECT` を許可（RLS設定済み）。
+- データ形式: 入力データおよび診断結果を `jsonb` で保持。集計用に属性項目（会社名、役職等）を個別カラムで保持。
 
-## 今回の不具合原因
-- `saveReport` 関数内で `insert` 直後に `.select('share_id').single()` を実行していた。
-- RLSの設定やタイミングにより `select` が失敗し、`shareId` が返らなかったため、常に `/report` へフォールバックしてしまっていた。
+## 共有URL (/report/[shareId]) の仕様
+- 形式: `/report/rpt_[random_string]`
+- 仕組み: クライアント側で事前に `share_id` を生成し、DB保存成功後にその ID を含む URL へリダイレクト。
+- 永続性: DB に保存されているため、別端末やシークレットウィンドウからでも閲覧可能。
 
-## 今回の修正内容
-- `insert` 後の `select` 依存を廃止し、事前に生成した `shareId` を直接返すように変更。
-- `saveReport` の戻り値を `{ success, shareId, error }` の形式に統一し、呼び出し側でのエラーハンドリングを強化。
-- `ReportView` のフッターメッセージをより具体的に修正。
+## localStorage fallback の仕様
+- 保存順序: `localStorage` への保存を先に行い、その後に Supabase への非同期保存を実行。
+- エラーハンドリング: Supabase への保存に失敗（または未設定）の場合でも、`/report` へ遷移して `localStorage` のデータを表示。アプリが止まらない設計。
 
-## 次に確認すること
-- [ ] 診断実行後、URLが `/report/rpt_...` になっているか。
-- [ ] 共有URLをシークレットウィンドウで開いて表示されるか。
-- [ ] RLSポリシーが正しく動作しているか（SELECTが可能か）。
+## 環境変数の設定 (.env.local)
+以下のキーを `Settings > API` から取得して設定が必要です。
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase プロジェクトの URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase の公開用 API キー (anon key)
+※ `service_role` キーはセキュリティ上、フロントエンドでは使用しないでください。
 
-## GitHub保存コマンド
-```bash
-git add .
-git commit -m "Fix navigation to shared URL and add development notes for Obsidian"
-git push
-```
+## Supabase側で実施済みの内容
+- `diagnoses` テーブル作成済み。
+- `docs/supabase-setup.sql` を SQL Editor で実行し、インデックスと RLS ポリシーを適用済み。
+- `share_id` が `rpt_...` 形式で正しく保存されることを確認済み。
+
+## 今回解決した不具合
+- **Supabase URLのタイプミス**: 接続エラーを解消。
+- **/report にfallbackしてしまう問題**: 保存結果の success 判定を厳格化。
+- **insert後のselect依存問題**: `insert().select().single()` をやめ、生成済み `share_id` を直接返すことで RLS 制限下でも確実に遷移できるよう改善。
+
+## 動作確認済みの内容
+- `npm run build` 成功。
+- Supabase に診断データが正常に保存される。
+- 診断完了後、`/report/rpt_...` に正しくリダイレクトされる。
+- シークレットウィンドウでも共有URLの内容が表示される。
+
+## 次に実装する候補
+- [ ] **/admin の診断結果一覧**: 全ユーザーの診断履歴の可視化。
+- [ ] **会社別集計**: ドメインや会社名に基づいた分析。
+- [ ] **CSV出力**: 診断結果の外部出力機能。
+- [ ] **Vercel公開**: 本番環境へのデプロイ。
+- [ ] **管理画面ログイン認証**: Supabase Auth 等を利用した安全なアクセス制限。
+
+---
+最終更新日: 2026-05-09
