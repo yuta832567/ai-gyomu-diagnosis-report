@@ -114,3 +114,22 @@ export interface DiagnosisResult {
   actionPlan: string[];
   sensitiveTasks: string[]; // 注意が必要な業務タイトルのリスト
 }
+
+// データベース保存用レコード型
+export interface DiagnosisRecord {
+  id: string;
+  share_id: string;
+  name: string;
+  company_name: string;
+  department_name?: string;
+  role: string;
+  industry: string;
+  company_size: string;
+  selected_tools: string[];
+  tool_plans: Record<string, string>;
+  input_data: DiagnosisData;
+  report_data: DiagnosisResult;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
