@@ -215,7 +215,13 @@ export default function DiagnosePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState(0);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+
   const handleGenerateReport = async () => {
+    if (isGenerating) return;
+
     const isValid = await trigger();
 
     if (!isValid) {
@@ -224,11 +230,20 @@ export default function DiagnosePage() {
       return;
     }
 
-    const data = getValues();
-    const result = generateDiagnosisReport(data as DiagnosisData);
+    setIsGenerating(true);
+    setGenerationStep(1); // ステップ1: 入力内容の整理
     
-    // OpenAI API連携: AIアドバイスの生成
-    setToast({ message: 'AIによる追加アドバイスを生成中...', type: 'success' });
+    const data = getValues();
+    
+    // 擬似的な待ち時間でUXを向上
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setGenerationStep(2); // ステップ2: 削減時間の計算
+    
+    const result = generateDiagnosisReport(data as DiagnosisData);
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    // ステップ3: AIアドバイスの生成
+    setGenerationStep(3);
     
     try {
       const aiResponse = await fetch('/api/generate-ai-advice', {
@@ -250,16 +265,24 @@ export default function DiagnosePage() {
         result.aiAdvice = aiAdvice;
       } else {
         console.warn('AIアドバイスの生成に失敗しました（ステータスコード異常）');
+        setGenerationError('AIアドバイスの生成に時間がかかっているため、基本診断レポートを先に表示します。');
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     } catch (error) {
       console.error('AIアドバイスの生成中にエラーが発生しました:', error);
-      // エラー時も基本レポートの保存・表示は継続する
+      setGenerationError('AIによる追加アドバイスは一時的に生成できませんでしたが、基本診断結果は通常通りご確認いただけます。');
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // Supabaseへの保存（aiAdviceが含まれる可能性がある）
+    // ステップ4: レポートの保存
+    setGenerationStep(4);
     const saveResult = await saveReport(data as DiagnosisData, result);
-    console.log('saveReport result:', saveResult);
+    await new Promise(resolve => setTimeout(resolve, 800));
     
+    // ステップ5: 共有URLの準備
+    setGenerationStep(5);
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     if (saveResult.success && saveResult.shareId) {
       router.push(`/report/${saveResult.shareId}`);
     } else {
@@ -942,14 +965,133 @@ export default function DiagnosePage() {
                   {step === 4 ? '入力内容を確認する' : '次へ進む'} <ChevronRight className="w-6 h-6" />
                 </button>
               ) : (
-                <button type="button" onClick={handleGenerateReport} className="flex-[2] py-5 px-6 bg-cyan-600 text-white rounded-3xl font-black flex items-center justify-center gap-3 hover:bg-cyan-700 transition-all shadow-2xl shadow-cyan-200 active:scale-95">
-                  診断レポートを生成する <ArrowRight className="w-6 h-6" />
+                <button 
+                  type="button" 
+                  disabled={isGenerating}
+                  onClick={handleGenerateReport} 
+                  className={cn(
+                    "flex-[2] py-5 px-6 rounded-3xl font-black flex items-center justify-center gap-3 transition-all shadow-2xl active:scale-95",
+                    isGenerating 
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                      : "bg-cyan-600 text-white hover:bg-cyan-700 shadow-cyan-200"
+                  )}
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-400 rounded-full animate-spin" />
+                      診断レポートを生成中...
+                    </>
+                  ) : (
+                    <>
+                      診断レポートを生成する <ArrowRight className="w-6 h-6" />
+                    </>
+                  )}
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* 生成中オーバーレイ */}
+      <AnimatePresence>
+        {isGenerating && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-white w-full max-w-lg rounded-[3.5rem] shadow-2xl p-10 md:p-14 overflow-hidden relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-slate-50">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                  initial={{ width: "0%" }}
+                  animate={{ width: `${(generationStep / 5) * 100}%` }}
+                />
+              </div>
+
+              <div className="text-center mb-10">
+                <div className="w-20 h-20 bg-cyan-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 relative">
+                  <Sparkles className="w-10 h-10 text-cyan-600 animate-pulse" />
+                  <motion.div 
+                    className="absolute inset-0 border-4 border-cyan-400 rounded-[2rem]"
+                    animate={{ scale: [1, 1.2, 1], opacity: [1, 0, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mb-4">AI診断レポートを生成しています</h2>
+                <p className="text-slate-500 font-bold text-sm leading-relaxed">
+                  入力内容をもとに、削減時間の計算と<br />AIによる追加アドバイスを作成しています。
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { id: 1, text: '入力内容を整理しています' },
+                  { id: 2, text: '削減時間を計算しています' },
+                  { id: 3, text: 'AIによる追加アドバイスを生成しています' },
+                  { id: 4, text: 'レポートを保存しています' },
+                  { id: 5, text: '共有URLを準備しています' },
+                ].map((s) => (
+                  <div key={s.id} className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500",
+                      generationStep > s.id ? "bg-cyan-500 border-cyan-500 text-white shadow-md" :
+                      generationStep === s.id ? "border-cyan-500 text-cyan-500 animate-pulse" :
+                      "border-slate-100 text-slate-200"
+                    )}>
+                      {generationStep > s.id ? <Check className="w-5 h-5" strokeWidth={4} /> : <span className="text-xs font-black">{s.id}</span>}
+                    </div>
+                    <p className={cn(
+                      "text-sm font-black transition-all duration-500",
+                      generationStep > s.id ? "text-slate-400" :
+                      generationStep === s.id ? "text-cyan-600" :
+                      "text-slate-200"
+                    )}>
+                      {s.text}
+                    </p>
+                    {generationStep === s.id && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="ml-auto"
+                      >
+                        <div className="flex gap-1">
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {generationError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-10 p-5 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-orange-700 leading-relaxed">
+                    {generationError}
+                  </p>
+                </motion.div>
+              )}
+
+              <p className="mt-12 text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest">
+                完了まで数秒お待ちください。この画面を閉じずにお待ちください。
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
