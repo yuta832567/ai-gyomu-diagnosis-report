@@ -19,7 +19,9 @@ import {
   ChevronRight,
   Database,
   BarChart3,
-  Download
+  Download,
+  LogOut,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DiagnosisRecord } from '@/lib/types';
@@ -31,6 +33,11 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<DiagnosisRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // 認証用ステート
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState(false);
 
   // フィルター用ステート
   const [searchCompany, setSearchCompany] = useState('');
@@ -38,10 +45,19 @@ export default function AdminDashboard() {
   const [filterTool, setFilterTool] = useState('all');
 
   useEffect(() => {
+    // セッションチェック
+    const authStatus = sessionStorage.getItem('admin_authenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     async function loadData() {
       setLoading(true);
       try {
-        // 環境変数のチェック（簡易的）
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
           setError('Supabaseが未設定、または接続できないため、保存済み診断一覧を表示できません。');
           setLoading(false);
@@ -57,7 +73,29 @@ export default function AdminDashboard() {
       }
     }
     loadData();
-  }, []);
+  }, [isAuthenticated]);
+
+  // ログイン処理
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+    
+    if (password === adminPassword) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('admin_authenticated', 'true');
+      setLoginError(false);
+    } else {
+      setLoginError(true);
+      setPassword('');
+    }
+  };
+
+  // ログアウト処理
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('admin_authenticated');
+    setReports([]);
+  };
 
   // フィルタリング処理
   const filteredReports = useMemo(() => {
@@ -164,6 +202,56 @@ export default function AdminDashboard() {
     return Array.from(set).sort();
   }, [reports]);
 
+  if (!isAuthenticated) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-4">
+      <div className="max-w-md w-full bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100">
+        <div className="flex flex-col items-center gap-6 text-center mb-10">
+          <div className="w-16 h-16 bg-cyan-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-100">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">管理者認証</h2>
+            <p className="text-sm font-bold text-slate-400 mt-1">ダッシュボード閲覧にはパスワードが必要です</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">管理者パスワード</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className={cn(
+                "w-full px-6 py-4 bg-slate-50 border-2 rounded-2xl text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-cyan-500/10",
+                loginError ? "border-red-200 bg-red-50 focus:border-red-400" : "border-transparent focus:border-cyan-500"
+              )}
+              autoFocus
+            />
+            {loginError && (
+              <p className="text-[11px] font-bold text-red-500 ml-1">パスワードが正しくありません</p>
+            )}
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200"
+          >
+            ログイン
+          </button>
+        </form>
+
+        <div className="mt-12 text-center">
+          <p className="text-[10px] font-bold text-slate-300 leading-relaxed">
+            現在は開発用の簡易認証です。<br />
+            本番運用ではSupabase Auth等による認証強化を推奨します。
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
       <div className="flex flex-col items-center gap-4">
@@ -188,13 +276,18 @@ export default function AdminDashboard() {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Diagnosis Results Manager</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-500" />
-              <p className="text-[11px] font-bold text-amber-700">
-                本番運用時はログイン認証が必要です
-              </p>
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex flex-col items-end">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Security Mode</p>
+              <p className="text-[11px] font-bold text-amber-600 uppercase">簡易パスワード認証</p>
             </div>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-black transition-all active:scale-95"
+            >
+              <LogOut className="w-4 h-4" />
+              ログアウト
+            </button>
           </div>
         </div>
       </div>
