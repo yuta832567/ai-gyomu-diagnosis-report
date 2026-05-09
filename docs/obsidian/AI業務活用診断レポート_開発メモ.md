@@ -67,5 +67,29 @@ AIツール（ChatGPT, Copilot, Gemini）を業務にどう活用できるかを
 - [ ] **Vercel公開**: 本番環境へのデプロイ。
 - [ ] **管理画面ログイン認証**: Supabase Auth 等を利用した安全なアクセス制限。
 
+## GitHub保存コマンド
+```bash
+git add .
+git commit -m "Update development memo"
+git push
+```
+
+## Obsidian同期コマンド
+本プロジェクトのドキュメントを Obsidian Vault へ同期するには、以下のコマンドを実行してください。
+
+```bash
+npm run sync:obsidian
+```
+
+### 実行方法
+1. `docs/obsidian/AI業務活用診断レポート_開発メモ.md` を編集します。
+2. ターミナルで `npm run sync:obsidian` を実行します。
+3. 指定された Obsidian Vault パスに最新のメモがコピーされます。
+
+### 注意点
+- 同期スクリプト内の Vault パスは個人の PC 環境に依存します。パスを変更する場合は `scripts/sync-obsidian.js` を修正してください。
+- 同期されるのは `docs/obsidian/` 内の特定ファイルのみです。
+- 秘密情報（APIキー等）は絶対に Markdown に含めないでください。
+
 ---
 最終更新日: 2026-05-09
