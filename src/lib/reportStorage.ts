@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { DiagnosisData, DiagnosisResult, DiagnosisRecord } from './types';
+import { DiagnosisData, DiagnosisResult, DiagnosisRecord, SaveDiagnosisResult } from './types';
 
 // localStorageのキー
 const STORAGE_INPUT_KEY = 'diagnosis_input';
@@ -16,20 +16,21 @@ const generateShareId = () => {
 
 /**
  * 診断結果を保存する
- * 1. Supabaseへの保存を試みる
- * 2. 失敗した場合、または環境変数が未設定の場合はlocalStorageにのみ保存する
+ * 1. 常にlocalStorageに保存
+ * 2. Supabaseへの保存（insert）を試みる
+ * 3. 事前に生成した share_id を返す
  */
-export const saveReport = async (input: DiagnosisData, result: DiagnosisResult): Promise<{ shareId?: string; error?: any }> => {
+export const saveReport = async (input: DiagnosisData, result: DiagnosisResult): Promise<SaveDiagnosisResult> => {
   // 常に最新データをlocalStorageに保存（オフライン・障害対策）
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORAGE_INPUT_KEY, JSON.stringify(input));
     localStorage.setItem(STORAGE_RESULT_KEY, JSON.stringify(result));
   }
 
+  const shareId = generateShareId();
+
   // Supabaseへの保存試行
   try {
-    const shareId = generateShareId();
-    
     // カラムとデータのマッピング
     const record = {
       share_id: shareId,
@@ -46,19 +47,32 @@ export const saveReport = async (input: DiagnosisData, result: DiagnosisResult):
       is_public: true
     };
 
-    const { data, error } = await supabase
+    // insertのみ実行（select().single()に依存しない）
+    const { error } = await supabase
       .from('diagnoses')
-      .insert([record])
-      .select('share_id')
-      .single();
+      .insert([record]);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase insert failed:', error);
+      return {
+        success: false,
+        shareId: null,
+        error: error.message
+      };
+    }
     
-    return { shareId: data.share_id };
+    return {
+      success: true,
+      shareId,
+      error: null
+    };
   } catch (err) {
-    console.error('Supabase save failed:', err);
-    // 失敗してもアプリを止めないよう、エラーのみ返す（localStorageには既に保存済み）
-    return { error: err };
+    console.error('Supabase save failed with exception:', err);
+    return {
+      success: false,
+      shareId: null,
+      error: err instanceof Error ? err.message : String(err)
+    };
   }
 };
 

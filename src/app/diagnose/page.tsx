@@ -228,11 +228,13 @@ export default function DiagnosePage() {
     const result = generateDiagnosisReport(data as DiagnosisData);
     
     // Supabaseへの保存を試みる（内部でlocalStorageにも保存される）
-    const { shareId } = await saveReport(data as DiagnosisData, result);
+    const saveResult = await saveReport(data as DiagnosisData, result);
+    console.log('saveReport result:', saveResult);
     
-    if (shareId) {
-      router.push(`/report/${shareId}`);
+    if (saveResult.success && saveResult.shareId) {
+      router.push(`/report/${saveResult.shareId}`);
     } else {
+      console.warn('Supabase保存に失敗したため /report にfallbackします:', saveResult.error);
       router.push('/report');
     }
   };

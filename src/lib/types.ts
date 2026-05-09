@@ -133,3 +133,10 @@ export interface DiagnosisRecord {
   created_at: string;
   updated_at: string;
 }
+
+// 保存処理の結果型
+export interface SaveDiagnosisResult {
+  success: boolean;
+  shareId: string | null;
+  error: string | null;
+}

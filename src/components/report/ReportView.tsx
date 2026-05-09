@@ -675,7 +675,7 @@ export default function ReportView({ result, shareId, onBackToDiagnose }: Report
             {shareId ? (
               "この診断レポートは保存されており、上記のリンクからいつでも閲覧可能です。"
             ) : (
-              "注意書き：現在はこの端末内に保存された診断結果を表示しています。別端末で共有するには、保存済み共有URLが必要です。"
+              "現在はこの端末内に保存された診断結果を表示しています。別端末やシークレットウィンドウで共有するには、保存済み共有URL（/report/rpt_...）が必要です。"
             )}
           </p>
         </section>
