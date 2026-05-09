@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   ChevronRight,
   Database,
-  BarChart3
+  BarChart3,
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DiagnosisRecord } from '@/lib/types';
@@ -67,6 +68,71 @@ export default function AdminDashboard() {
       return matchCompany && matchIndustry && matchTool;
     });
   }, [reports, searchCompany, filterIndustry, filterTool]);
+
+  // CSVエクスポート処理
+  const handleExportCSV = () => {
+    if (filteredReports.length === 0) {
+      alert('出力できる診断結果がありません。');
+      return;
+    }
+
+    const headers = [
+      '診断日時',
+      '氏名',
+      '会社名',
+      '部署名',
+      '役職',
+      '業種',
+      '会社規模',
+      '選択AIツール',
+      '登録業務数',
+      '月間削減時間',
+      '年間削減時間',
+      'AI活用スコア',
+      '共有URL'
+    ];
+
+    const rows = filteredReports.map(report => {
+      const date = new Date(report.created_at).toLocaleString('ja-JP');
+      const tools = report.selected_tools.map(id => AI_TOOLS.find(t => t.id === id)?.label).join(' / ');
+      const shareUrl = `${window.location.origin}/report/${report.share_id}`;
+      
+      return [
+        date,
+        report.name,
+        report.company_name,
+        report.department_name || '',
+        report.role,
+        report.industry,
+        report.company_size,
+        tools,
+        report.input_data.tasks.length,
+        report.report_data.kpis.totalSavingsMonthly.toFixed(1),
+        Math.round(report.report_data.kpis.totalSavingsYearly),
+        report.report_data.overallScore,
+        shareUrl
+      ].map(val => `"${String(val).replace(/"/g, '""')}"`); // カンマやクォートの対策
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Excel対応のためUTF-8 BOMを付与
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ai-gyomu-diagnosis-reports_${today}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // 集計データ
   const stats = useMemo(() => {
@@ -169,7 +235,7 @@ export default function AdminDashboard() {
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-cyan-500 transition-all"
                   />
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center flex-wrap gap-4">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4 text-slate-400" />
                     <select 
@@ -193,6 +259,22 @@ export default function AdminDashboard() {
                       <option key={tool.id} value={tool.id}>{tool.label}</option>
                     ))}
                   </select>
+
+                  <div className="h-8 w-[1px] bg-slate-100 mx-2 hidden sm:block" />
+
+                  <button
+                    onClick={handleExportCSV}
+                    disabled={filteredReports.length === 0}
+                    className={cn(
+                      "flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all active:scale-95",
+                      filteredReports.length > 0 
+                        ? "bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-200" 
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    )}
+                  >
+                    <Download className="w-4 h-4" />
+                    CSVをダウンロード
+                  </button>
                 </div>
               </div>
             </div>
