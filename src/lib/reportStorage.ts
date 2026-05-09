@@ -97,6 +97,24 @@ export const getReportByShareId = async (shareId: string): Promise<DiagnosisReco
 };
 
 /**
+ * 全ての診断結果を取得する（管理者用）
+ */
+export const getAllReports = async (): Promise<DiagnosisRecord[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('diagnoses')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as DiagnosisRecord[];
+  } catch (err) {
+    console.error('Failed to fetch all reports from Supabase:', err);
+    return [];
+  }
+};
+
+/**
  * localStorageから最新の診断結果を取得する
  */
 export const getLocalReport = (): { input: DiagnosisData; result: DiagnosisResult } | null => {
