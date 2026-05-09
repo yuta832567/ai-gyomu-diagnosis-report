@@ -12,16 +12,10 @@ import {
   FileText, 
   ChevronRight, 
   CheckCircle2, 
-  Users, 
-  Building2, 
   ArrowRight,
   MousePointer2,
-  Lock,
   Cpu,
-  Share2,
-  FileDown,
-  Info,
-  Search
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -66,7 +60,7 @@ export default function LandingPage() {
           >
             <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-cyan-100 rounded-full shadow-sm">
               <Sparkles className="w-4 h-4 text-cyan-500" />
-              <span className="text-[11px] font-black text-cyan-700 uppercase tracking-widest">AI Business Diagnosis</span>
+              <span className="text-[11px] font-black text-cyan-700 uppercase tracking-widest text-nowrap">AI業務活用診断</span>
             </motion.div>
 
             <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
@@ -88,13 +82,6 @@ export default function LandingPage() {
               >
                 診断をはじめる
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link 
-                href="/admin"
-                className="text-sm font-bold text-slate-400 hover:text-cyan-600 transition-all flex items-center gap-2"
-              >
-                <BarChart3 className="w-4 h-4" />
-                管理画面を見る
               </Link>
             </motion.div>
           </motion.div>
@@ -174,25 +161,25 @@ export default function LandingPage() {
       </section>
 
       {/* Report Features Section */}
-      <section className="py-24 bg-slate-900 text-white rounded-[3rem] mx-4 my-12 overflow-hidden relative">
+      <section className="py-24 bg-slate-900 text-white rounded-[3rem] mx-4 my-12 overflow-hidden relative shadow-2xl shadow-slate-200">
         <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-cyan-500 rounded-full blur-[150px] opacity-20" />
         
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
+            <div className="space-y-8 text-center lg:text-left">
               <h2 className="text-3xl md:text-4xl font-black leading-tight">直感的で、<br />すぐに行動に移せるレポート</h2>
-              <p className="text-slate-400 font-bold text-lg leading-relaxed">
+              <p className="text-slate-400 font-bold text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
                 分析して終わりではありません。明日からの業務がどう変わるか、具体的なイメージが湧くレポートを提供します。
               </p>
               
-              <ul className="space-y-6">
+              <ul className="space-y-6 text-left max-w-md mx-auto lg:mx-0">
                 <ReportFeatureItem title="AI活用ポテンシャルスコア" desc="現在の業務がどれくらいAIと相性が良いかを5段階で判定します。" />
                 <ReportFeatureItem title="業務別AI活用ガイド" desc="一つ一つの業務に対して、どのようにAIを使えば良いか詳細に解説します。" />
                 <ReportFeatureItem title="共有と保存" desc="PDFとして保存したり、共有URLを発行して関係者へすぐに送ることができます。" />
               </ul>
             </div>
             
-            <div className="relative">
+            <div className="relative max-w-md mx-auto w-full">
               <div className="bg-white/10 backdrop-blur-xl p-8 rounded-[3rem] border border-white/20 shadow-2xl">
                 <div className="space-y-6">
                   <div className="flex items-center gap-4 border-b border-white/10 pb-6">
@@ -200,17 +187,17 @@ export default function LandingPage() {
                       <BarChart3 className="w-6 h-6" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">Report Sample</p>
+                      <p className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">レポートサンプル</p>
                       <h3 className="text-xl font-black">業務効率化シミュレーション</h3>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Monthly Saving</p>
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/5 text-center">
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2">月間削減時間</p>
                       <p className="text-3xl font-black text-cyan-400">42.5 h</p>
                     </div>
-                    <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Overall Score</p>
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/5 text-center">
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2">総合スコア</p>
                       <p className="text-3xl font-black text-cyan-400">4.8</p>
                     </div>
                   </div>
@@ -218,7 +205,7 @@ export default function LandingPage() {
                     <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
                       <div className="w-[85%] h-full bg-cyan-500" />
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest">Actionable Insights Generated</p>
+                    <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest">実行しやすい提案を自動生成</p>
                   </div>
                 </div>
               </div>
@@ -227,64 +214,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Admin Features Section */}
-      <section className="py-24 border-t border-slate-100">
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-12">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-black text-slate-800">管理者向け機能</h2>
-            <p className="text-slate-500 font-bold text-sm">組織全体の診断結果を集計・分析し、DX推進を加速させます</p>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <AdminFeatureItem icon={<Users className="w-4 h-4" />} title="結果一覧" />
-            <AdminFeatureItem icon={<BarChart3 className="w-4 h-4" />} title="KPI集計" />
-            <AdminFeatureItem icon={<Search className="w-4 h-4" />} title="絞り込み" />
-            <AdminFeatureItem icon={<FileDown className="w-4 h-4" />} title="CSV出力" />
-          </div>
-          
-          <div className="pt-4">
-            <Link 
-              href="/admin"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-50 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all"
-            >
-              <Lock className="w-4 h-4" />
-              管理画面へアクセス
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Disclaimer Section */}
-      <section className="py-16 bg-[#f8fafc] border-t border-slate-100">
+      <section className="py-24 bg-[#f8fafc] border-t border-slate-100">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-6">
-            <div className="flex items-center gap-3 text-amber-600">
-              <Info className="w-5 h-5" />
-              <h3 className="font-black text-sm uppercase tracking-widest">注意事項</h3>
+          <div className="bg-white p-8 md:p-12 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+            <div className="flex items-center gap-3 text-slate-800">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                <Info className="w-5 h-5 text-slate-500" />
+              </div>
+              <h3 className="font-black text-lg uppercase tracking-widest">ご利用にあたって</h3>
             </div>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <DisclaimerItem text="本レポートは入力内容をもとにした簡易診断です。" />
               <DisclaimerItem text="AIの出力結果は必ず人間が確認してください。" />
-              <DisclaimerItem text="個人情報、機密情報の入力には注意してください。" />
-              <DisclaimerItem text="管理画面は現在開発用の簡易認証モードです。" />
+              <DisclaimerItem text="個人情報、機密情報、未公開情報の入力には注意してください。" />
             </ul>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 text-center">
+      <section className="py-32 text-center relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full -z-10 opacity-30 blur-[100px]">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-cyan-50 to-blue-50" />
+        </div>
         <div className="max-w-4xl mx-auto px-6 space-y-12">
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">さあ、あなたの業務の「AIポテンシャル」を<br />確かめてみましょう</h2>
-          <div className="flex flex-col items-center gap-4">
+          <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">さあ、あなたの業務の「AIポテンシャル」を<br className="hidden md:block" />確かめてみましょう</h2>
+          <div className="flex flex-col items-center gap-6">
             <Link 
               href="/diagnose"
-              className="px-12 py-6 bg-cyan-600 text-white rounded-[2.5rem] font-black text-xl hover:bg-cyan-700 transition-all shadow-2xl shadow-cyan-100 active:scale-95 flex items-center gap-4"
+              className="px-12 py-6 bg-cyan-600 text-white rounded-[2.5rem] font-black text-xl hover:bg-cyan-700 transition-all shadow-2xl shadow-cyan-200 active:scale-95 flex items-center gap-4"
             >
               診断をはじめる
               <ArrowRight className="w-6 h-6" />
             </Link>
-            <p className="text-slate-400 font-bold text-sm">完全無料でご利用いただけます</p>
+            <p className="text-slate-400 font-bold text-sm tracking-tight">入力内容をもとに、すぐに診断レポートを確認できます</p>
           </div>
         </div>
       </section>
@@ -352,15 +316,6 @@ function ReportFeatureItem({ title, desc }: { title: string, desc: string }) {
         <p className="text-slate-400 font-bold text-sm leading-relaxed">{desc}</p>
       </div>
     </li>
-  );
-}
-
-function AdminFeatureItem({ icon, title }: { icon: React.ReactNode, title: string }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
-      <div className="text-slate-400">{icon}</div>
-      <span className="text-xs font-black text-slate-600 tracking-tight">{title}</span>
-    </div>
   );
 }
 
