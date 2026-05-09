@@ -11,6 +11,7 @@ AIツール（ChatGPT, Copilot, Gemini）を業務にどう活用できるかを
 - [x] 共有URL (/report/[shareId]) による閲覧機能
 - [x] localStorage によるオフライン・保存失敗時のフォールバック
 - [x] 管理画面 (/admin) による診断結果一覧・集計機能
+- [x] Vercel 公開用デプロイチェックリストの作成
 
 ### 診断フォーム (/diagnose)
 - 5ステップ構成。
