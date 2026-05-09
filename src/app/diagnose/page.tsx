@@ -57,6 +57,7 @@ import {
 } from '@/lib/constants';
 import { AIToolId, FrequencyId, CategoryId, ConfidentialityLevel, DiagnosisData } from '@/lib/types';
 import { generateDiagnosisReport } from '@/lib/reportGenerator';
+import { saveReport } from '@/lib/reportStorage';
 
 // バリデーションスキーマ
 const schema = z.object({
@@ -225,11 +226,15 @@ export default function DiagnosePage() {
 
     const data = getValues();
     const result = generateDiagnosisReport(data as DiagnosisData);
-
-    localStorage.setItem('diagnosis_input', JSON.stringify(data));
-    localStorage.setItem('diagnosis_result', JSON.stringify(result));
-
-    router.push('/report');
+    
+    // Supabaseへの保存を試みる（内部でlocalStorageにも保存される）
+    const { shareId } = await saveReport(data as DiagnosisData, result);
+    
+    if (shareId) {
+      router.push(`/report/${shareId}`);
+    } else {
+      router.push('/report');
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
