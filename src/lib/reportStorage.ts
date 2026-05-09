@@ -56,21 +56,18 @@ export const saveReport = async (input: DiagnosisData, result: DiagnosisResult):
       console.error('Supabase insert failed:', error);
       return {
         success: false,
-        shareId: null,
         error: error.message
       };
     }
     
     return {
       success: true,
-      shareId,
-      error: null
+      shareId
     };
   } catch (err) {
     console.error('Supabase save failed with exception:', err);
     return {
       success: false,
-      shareId: null,
       error: err instanceof Error ? err.message : String(err)
     };
   }

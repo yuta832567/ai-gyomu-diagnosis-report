@@ -21,7 +21,8 @@ import {
   BarChart3,
   Download,
   LogOut,
-  Lock
+  Lock,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DiagnosisRecord } from '@/lib/types';
@@ -127,6 +128,7 @@ export default function AdminDashboard() {
       '月間削減時間',
       '年間削減時間',
       'AI活用スコア',
+      'AIコメント生成状態',
       '共有URL'
     ];
 
@@ -148,6 +150,7 @@ export default function AdminDashboard() {
         report.report_data.kpis.totalSavingsMonthly.toFixed(1),
         Math.round(report.report_data.kpis.totalSavingsYearly),
         report.report_data.overallScore,
+        report.report_data.aiAdvice ? '生成済み' : '未生成',
         shareUrl
       ].map(val => `"${String(val).replace(/"/g, '""')}"`); // カンマやクォートの対策
     });
@@ -384,6 +387,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">業務数</th>
                       <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">月間削減</th>
                       <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">スコア</th>
+                      <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">AIコメント</th>
                       <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">操作</th>
                     </tr>
                   </thead>
@@ -428,6 +432,17 @@ export default function AdminDashboard() {
                           <td className="px-6 py-6 text-right">
                             <div className="inline-flex items-center gap-1 px-3 py-1 bg-slate-900 text-white rounded-full text-[10px] font-black tracking-widest">
                               {report.report_data.overallScore}
+                            </div>
+                          </td>
+                          <td className="px-6 py-6 text-center">
+                            <div className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase shadow-sm",
+                              report.report_data.aiAdvice 
+                                ? "bg-cyan-50 text-cyan-600 border border-cyan-100" 
+                                : "bg-slate-50 text-slate-300 border border-slate-100"
+                            )}>
+                              <Sparkles className={cn("w-3 h-3", report.report_data.aiAdvice ? "text-cyan-500" : "text-slate-300")} />
+                              {report.report_data.aiAdvice ? '生成済み' : '未生成'}
                             </div>
                           </td>
                           <td className="px-6 py-6 text-center">

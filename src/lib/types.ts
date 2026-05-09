@@ -96,6 +96,21 @@ export interface TaskDiagnosisResult {
   doNotInput: string;
 }
 
+export interface TaskAdvice {
+  taskTitle: string;
+  advice: string;
+  promptExample: string;
+  riskNote: string;
+}
+
+export interface AIAdvice {
+  overallAdvice: string;
+  priorityReason: string;
+  firstAction: string;
+  taskAdvices: TaskAdvice[];
+  nextActions: string[];
+}
+
 export interface DiagnosisResult {
   inputData: DiagnosisData; // 入力データを保持
   generatedAt: string;
@@ -113,6 +128,7 @@ export interface DiagnosisResult {
   radarData: { subject: string; A: number; fullMark: number }[];
   actionPlan: string[];
   sensitiveTasks: string[]; // 注意が必要な業務タイトルのリスト
+  aiAdvice?: AIAdvice; // 追加：AIによるアドバイス（オプション）
 }
 
 // データベース保存用レコード型
@@ -137,6 +153,6 @@ export interface DiagnosisRecord {
 // 保存処理の結果型
 export interface SaveDiagnosisResult {
   success: boolean;
-  shareId: string | null;
-  error: string | null;
+  shareId?: string;
+  error?: string;
 }

@@ -227,7 +227,36 @@ export default function DiagnosePage() {
     const data = getValues();
     const result = generateDiagnosisReport(data as DiagnosisData);
     
-    // Supabaseへの保存を試みる（内部でlocalStorageにも保存される）
+    // OpenAI API連携: AIアドバイスの生成
+    setToast({ message: 'AIによる追加アドバイスを生成中...', type: 'success' });
+    
+    try {
+      const aiResponse = await fetch('/api/generate-ai-advice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          diagnosisData: data,
+          diagnosticResults: {
+            totalSavingsMonthly: result.kpis.totalSavingsMonthly,
+            totalSavingsYearly: result.kpis.totalSavingsYearly,
+            overallScore: result.overallScore,
+            taskRankings: result.taskResults.map(r => ({ title: r.title, score: r.score }))
+          }
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const aiAdvice = await aiResponse.json();
+        result.aiAdvice = aiAdvice;
+      } else {
+        console.warn('AIアドバイスの生成に失敗しました（ステータスコード異常）');
+      }
+    } catch (error) {
+      console.error('AIアドバイスの生成中にエラーが発生しました:', error);
+      // エラー時も基本レポートの保存・表示は継続する
+    }
+
+    // Supabaseへの保存（aiAdviceが含まれる可能性がある）
     const saveResult = await saveReport(data as DiagnosisData, result);
     console.log('saveReport result:', saveResult);
     
@@ -880,6 +909,19 @@ export default function DiagnosePage() {
                           </li>
                         ))}
                       </ul>
+                    </div>
+
+                    {/* AI送信に関する注意文 */}
+                    <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100 flex items-start gap-4">
+                      <div className="p-2 bg-orange-100 rounded-xl text-orange-600 flex-shrink-0">
+                        <ShieldAlert className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-black text-orange-800">AIアドバイス生成に関するご注意</p>
+                        <p className="text-[10px] font-bold text-orange-700 leading-relaxed">
+                          診断レポートの文章生成のため、入力内容の一部をOpenAI APIに送信します。個人情報・機密情報の入力には十分ご注意ください。
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
