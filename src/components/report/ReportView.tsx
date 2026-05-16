@@ -88,8 +88,8 @@ export default function ReportView({ result, shareId, onBackToDiagnose }: Report
       : window.location.href;
 
     const shareData = {
-      title: 'AI業務活用診断レポート',
-      text: `${basicInfo.name}様のAI業務活用診断レポートです。月間${kpis.totalSavingsMonthly.toFixed(1)}時間の削減可能性があります。`,
+      title: '生成AI業務診断ツール',
+      text: `${basicInfo.name}様の生成AI業務診断ツールです。月間${kpis.totalSavingsMonthly.toFixed(1)}時間の削減可能性があります。`,
       url: shareUrl,
     };
 
@@ -138,7 +138,7 @@ export default function ReportView({ result, shareId, onBackToDiagnose }: Report
       
       {/* 印刷用ヘッダー */}
       <div className="hidden print:flex justify-between items-center mb-8 border-b pb-4">
-        <div className="font-black text-xl text-cyan-600 italic tracking-tighter">AI業務活用診断レポート</div>
+        <div className="font-black text-xl text-cyan-600 italic tracking-tighter">生成AI業務診断ツール</div>
         <div className="text-xs text-slate-400 font-bold">診断日: {result.generatedAt}</div>
       </div>
 
@@ -172,7 +172,7 @@ export default function ReportView({ result, shareId, onBackToDiagnose }: Report
               <div>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-cyan-50 text-cyan-600 rounded-full text-[11px] font-black tracking-[0.1em] mb-6">
                   <Sparkles className="w-3.5 h-3.5" />
-                  AI業務活用診断レポート
+                  生成AI業務診断ツール
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
                   AI業務活用<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">診断レポート</span>

@@ -64,11 +64,11 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
-              AI業務活用診断レポート
+              生成AI業務診断ツール
             </motion.h1>
 
             <motion.p variants={itemVariants} className="text-xl md:text-2xl font-bold text-cyan-600 tracking-tight max-w-2xl">
-              5分で、AI活用できる業務と削減効果を見える化
+              あなたの業務に最適な活用方法を診断
             </motion.p>
 
             <motion.p variants={itemVariants} className="text-base md:text-lg text-slate-500 font-bold max-w-2xl leading-relaxed">
@@ -259,7 +259,7 @@ export default function LandingPage() {
           <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white">
             <BarChart3 className="w-4 h-4" />
           </div>
-          <span className="font-black text-sm tracking-tight">AI業務活用診断レポート</span>
+          <span className="font-black text-sm tracking-tight">生成AI業務診断ツール</span>
         </div>
         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em]">© 2026 AI Business Diagnosis Project</p>
       </footer>

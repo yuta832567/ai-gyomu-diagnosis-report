@@ -18,29 +18,34 @@ export default function SharedReportPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadReport() {
+    async function loadReport(retryCount = 0) {
       if (!shareId) return;
       
-      setLoading(true);
+      if (retryCount === 0) setLoading(true);
+      
       const record = await getReportByShareId(shareId);
       
       if (record) {
         setResult(record.report_data);
         setError(null);
+        setLoading(false);
+      } else if (retryCount < 3) {
+        // データの同期遅延を考慮してリトライ
+        setTimeout(() => loadReport(retryCount + 1), 1000);
       } else {
         setError('診断レポートが見つかりませんでした。URLが正しいか確認してください。');
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     loadReport();
   }, [shareId]);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-cyan-50">
+    <div className="min-h-screen flex items-center justify-center bg-brand/5">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-cyan-800 font-bold text-sm tracking-wider">レポートを読み込み中...</p>
+        <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+        <p className="text-brand font-bold text-sm tracking-wider">レポートを読み込み中...</p>
       </div>
     </div>
   );

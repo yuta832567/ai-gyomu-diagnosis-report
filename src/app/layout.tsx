@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI業務活用診断レポート",
-  description: "5分で、AI活用できる業務と削減効果を見える化する診断ツールです。",
+  title: "生成AI業務診断ツール",
+  description: "あなたの業務に最適な活用方法を診断するツールです。",
 };
 
 export default function RootLayout({

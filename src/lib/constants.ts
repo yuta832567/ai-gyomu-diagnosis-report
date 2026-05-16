@@ -13,6 +13,20 @@ import {
 export const ROLES: Role[] = ['経営者', '役員', '管理職', '一般従業員', '研修受講者', 'その他'];
 
 export const COMPANY_SIZES: CompanySize[] = ['1〜10名', '11〜50名', '51〜300名', '301名以上'];
+export const INDUSTRIES = [
+  '製造業',
+  '建設業',
+  '卸売・小売業',
+  '情報通信業',
+  '医療・福祉',
+  '教育・学習支援',
+  '金融・保険業',
+  '不動産業',
+  '士業・専門サービス',
+  'サービス業',
+  '公務・自治体',
+  'その他'
+];
 
 export const AI_EXPERIENCES: AIExperience[] = ['未経験', '少し使ったことがある', '業務で使っている'];
 

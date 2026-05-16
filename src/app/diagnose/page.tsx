@@ -53,7 +53,8 @@ import {
   TASK_SUGGESTIONS,
   CONFIDENTIALITY_LEVELS,
   OUTPUTS,
-  PAIN_POINTS
+  PAIN_POINTS,
+  INDUSTRIES
 } from '@/lib/constants';
 import { AIToolId, FrequencyId, CategoryId, ConfidentialityLevel, DiagnosisData } from '@/lib/types';
 import { generateDiagnosisReport } from '@/lib/reportGenerator';
@@ -68,6 +69,7 @@ const schema = z.object({
     role: z.enum(ROLES as [string, ...string[]]),
     otherRoleText: z.string().optional(),
     industry: z.string().min(1, '業種を入力してください'),
+    otherIndustryText: z.string().optional(),
     companySize: z.enum(COMPANY_SIZES as [string, ...string[]]),
     aiExperience: z.enum(AI_EXPERIENCES as [string, ...string[]]),
     aiUsageFrequency: z.enum(AI_USAGE_FREQUENCIES as [string, ...string[]]),
@@ -79,6 +81,9 @@ const schema = z.object({
   }).superRefine((val, ctx) => {
     if (val.role === 'その他' && (!val.otherRoleText || val.otherRoleText.trim() === '')) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: '具体的な役職を入力してください', path: ['otherRoleText'] });
+    }
+    if (val.industry === 'その他' && (!val.otherIndustryText || val.otherIndustryText.trim() === '')) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: '具体的な業種を入力してください', path: ['otherIndustryText'] });
     }
     if (val.toolsUsed.includes('その他') && (!val.otherToolsText || val.otherToolsText.trim() === '')) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'その他のツール名を入力してください', path: ['otherToolsText'] });
@@ -143,6 +148,7 @@ const TOOL_TAGS: Record<AIToolId, string[]> = {
 export default function DiagnosePage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [isEditingFromConfirm, setIsEditingFromConfirm] = useState(false);
   const [showStepError, setShowStepError] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -156,6 +162,7 @@ export default function DiagnosePage() {
         companyName: '',
         departmentName: '',
         industry: '',
+        otherIndustryText: '',
         role: '一般従業員',
         companySize: '11〜50名',
         aiExperience: '少し使ったことがある',
@@ -198,7 +205,12 @@ export default function DiagnosePage() {
     
     if (isStepValid) {
       setShowStepError(false);
-      setStep(s => Math.min(s + 1, 5));
+      if (isEditingFromConfirm) {
+        setStep(5);
+        setIsEditingFromConfirm(false);
+      } else {
+        setStep(s => Math.min(s + 1, 5));
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setShowStepError(true);
@@ -211,6 +223,9 @@ export default function DiagnosePage() {
 
   const prevStep = () => {
     setShowStepError(false);
+    if (isEditingFromConfirm) {
+      setIsEditingFromConfirm(false);
+    }
     setStep(s => Math.max(s - 1, 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -321,7 +336,7 @@ export default function DiagnosePage() {
       tools: [],
       painPoints: [],
       confidentiality: 'なし' 
-    });
+    }, { shouldFocus: false });
 
     setToast({ message: suggestion ? `${suggestion.title} を追加しました` : '業務を追加しました', type: 'success' });
     setShowStepError(false);
@@ -348,15 +363,14 @@ export default function DiagnosePage() {
     );
   };
 
-  const Chip = ({ label, isSelected, onClick, color = "cyan" }: { label: string, isSelected: boolean, onClick: () => void, color?: "cyan" | "blue" | "orange" }) => (
+  const Chip = ({ label, isSelected, onClick, color = "brand" }: { label: string, isSelected: boolean, onClick: () => void, color?: "cyan" | "blue" | "orange" | "brand" }) => (
     <div 
       onClick={onClick}
       className={cn(
         "cursor-pointer px-4 py-2 rounded-xl border-2 text-xs font-bold transition-all flex items-center gap-2",
         isSelected 
-          ? color === "cyan" ? "bg-cyan-500 border-cyan-500 text-white shadow-md shadow-cyan-100" 
-            : color === "blue" ? "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-100"
-            : "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-100"
+          ? color === "orange" ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-100"
+            : "bg-brand border-brand text-white shadow-md shadow-cyan-100"
           : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
       )}
     >
@@ -373,7 +387,7 @@ export default function DiagnosePage() {
         <AnimatePresence>
           {toast && (
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm px-4">
-              <div className={cn("px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 border backdrop-blur-md", toast.type === 'success' ? "bg-cyan-500/90 border-cyan-400 text-white" : "bg-orange-600/90 border-orange-500 text-white")}>
+              <div className={cn("px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 border backdrop-blur-md", toast.type === 'success' ? "bg-brand/90 border-brand text-white" : "bg-orange-600/90 border-orange-500 text-white")}>
                 {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
                 <p className="text-sm font-black">{toast.message}</p>
               </div>
@@ -385,7 +399,7 @@ export default function DiagnosePage() {
         <div className="mb-8 bg-white/80 backdrop-blur-md p-5 rounded-[2.5rem] border border-white shadow-sm">
           <div className="flex justify-between items-center mb-4 px-2">
             <div>
-              <p className="text-[10px] font-black text-cyan-600 uppercase tracking-widest mb-1 italic">ステップ {step} / 5</p>
+              <p className="text-[10px] font-black text-brand uppercase tracking-widest mb-1 italic">ステップ {step} / 5</p>
               <h3 className="text-xl font-black text-slate-800 tracking-tight">{STEPS[step - 1].name}</h3>
             </div>
             <div className="text-right">
@@ -421,7 +435,7 @@ export default function DiagnosePage() {
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-xl border border-white">
                   <h2 className="text-2xl font-black text-slate-800 mb-2 flex items-center gap-3">
-                    <span className="p-2.5 bg-cyan-100 rounded-2xl"><Users className="text-cyan-600 w-6 h-6" /></span>
+                    <span className="p-2.5 bg-cyan-100 rounded-2xl"><Users className="text-brand w-6 h-6" /></span>
                     基本情報を教えてください
                   </h2>
                   
@@ -431,23 +445,39 @@ export default function DiagnosePage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">氏名 <span className="text-orange-500">*</span></label>
-                          <input {...register('basicInfo.name')} aria-invalid={!!errors.basicInfo?.name} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold", errors.basicInfo?.name ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-cyan-400 focus:bg-white")} placeholder="山田 太郎" />
+                          <input {...register('basicInfo.name')} aria-invalid={!!errors.basicInfo?.name} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold text-slate-900 placeholder:text-slate-400", errors.basicInfo?.name ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-brand focus:bg-white")} placeholder="山田 太郎" />
                           <ErrorMsg message={errors.basicInfo?.name?.message} />
                         </div>
                         <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">会社名 <span className="text-orange-500">*</span></label>
-                          <input {...register('basicInfo.companyName')} aria-invalid={!!errors.basicInfo?.companyName} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold", errors.basicInfo?.companyName ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-cyan-400 focus:bg-white")} placeholder="例：株式会社サンプル (個人の方は「個人」)" />
+                          <input {...register('basicInfo.companyName')} aria-invalid={!!errors.basicInfo?.companyName} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold text-slate-900 placeholder:text-slate-400", errors.basicInfo?.companyName ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-brand focus:bg-white")} placeholder="例：株式会社サンプル (個人の方は「個人」)" />
                           <ErrorMsg message={errors.basicInfo?.companyName?.message} />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">部署名</label>
-                          <input {...register('basicInfo.departmentName')} className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:border-cyan-400 focus:bg-white outline-none font-bold transition-all" placeholder="例：営業部、企画開発課など" />
+                          <input {...register('basicInfo.departmentName')} className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:border-brand focus:bg-white outline-none font-bold text-slate-900 placeholder:text-slate-400 transition-all" placeholder="例：営業部、企画開発課など" />
                         </div>
                         <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">業種 <span className="text-orange-500">*</span></label>
-                          <input {...register('basicInfo.industry')} aria-invalid={!!errors.basicInfo?.industry} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold", errors.basicInfo?.industry ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-cyan-400 focus:bg-white")} placeholder="IT、製造、サービス業など" />
+                          <select {...register('basicInfo.industry')} aria-invalid={!!errors.basicInfo?.industry} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold text-slate-900 appearance-none", errors.basicInfo?.industry ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-brand focus:bg-white")}>
+                            <option value="">選択してください</option>
+                            {INDUSTRIES.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+                          </select>
+                          <AnimatePresence>
+                            {basicInfo.industry === 'その他' && (
+                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 overflow-hidden">
+                                <input 
+                                  {...register('basicInfo.otherIndustryText')}
+                                  aria-invalid={!!errors.basicInfo?.otherIndustryText}
+                                  className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold text-sm text-slate-900 placeholder:text-slate-400", errors.basicInfo?.otherIndustryText ? "border-orange-200" : "border-transparent focus:border-brand focus:bg-white")}
+                                  placeholder="具体的な業種を入力してください"
+                                />
+                                <ErrorMsg message={errors.basicInfo?.otherIndustryText?.message} />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                           <ErrorMsg message={errors.basicInfo?.industry?.message} />
                         </div>
                       </div>
@@ -467,7 +497,7 @@ export default function DiagnosePage() {
                                 <input 
                                   {...register('basicInfo.otherRoleText')}
                                   aria-invalid={!!errors.basicInfo?.otherRoleText}
-                                  className={cn("w-full p-4 bg-cyan-50/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.basicInfo?.otherRoleText ? "border-orange-200" : "border-cyan-100 focus:border-cyan-400")}
+                                  className={cn("w-full p-4 bg-brand/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.basicInfo?.otherRoleText ? "border-orange-200" : "border-brand/20 focus:border-brand")}
                                   placeholder="例：個人事業主、講師、士業など"
                                 />
                                 <ErrorMsg message={errors.basicInfo?.otherRoleText?.message} />
@@ -525,7 +555,7 @@ export default function DiagnosePage() {
                               <input 
                                 {...register('basicInfo.otherToolsText')}
                                 aria-invalid={!!errors.basicInfo?.otherToolsText}
-                                className={cn("w-full p-4 bg-cyan-50/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.basicInfo?.otherToolsText ? "border-orange-200" : "border-cyan-100 focus:border-cyan-400")}
+                                className={cn("w-full p-4 bg-brand/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.basicInfo?.otherToolsText ? "border-orange-200" : "border-brand/20 focus:border-brand")}
                                 placeholder="例：kintone、Salesforce、独自システムなど"
                               />
                               <ErrorMsg message={errors.basicInfo?.otherToolsText?.message} />
@@ -553,7 +583,7 @@ export default function DiagnosePage() {
                               <input 
                                 {...register('basicInfo.otherExpectationsText')}
                                 aria-invalid={!!errors.basicInfo?.otherExpectationsText}
-                                className={cn("w-full p-4 bg-blue-50/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.basicInfo?.otherExpectationsText ? "border-orange-200" : "border-blue-100 focus:border-blue-400")}
+                                className={cn("w-full p-4 bg-brand/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.basicInfo?.otherExpectationsText ? "border-orange-200" : "border-brand/20 focus:border-brand")}
                                 placeholder="例：社内FAQを作りたい、問い合わせ対応を自動化したいなど"
                               />
                               <ErrorMsg message={errors.basicInfo?.otherExpectationsText?.message} />
@@ -572,7 +602,7 @@ export default function DiagnosePage() {
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                 <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-white">
                   <h2 className="text-2xl font-black text-slate-800 mb-2 flex items-center gap-3">
-                    <span className="p-2.5 bg-cyan-100 rounded-2xl"><Sparkles className="text-cyan-600 w-6 h-6" /></span>
+                    <span className="p-2.5 bg-cyan-100 rounded-2xl"><Sparkles className="text-brand w-6 h-6" /></span>
                     診断対象のAIツールを選択
                   </h2>
                   <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">複数選択できます。現在使っている、または導入を検討しているツールを選んでください。</p>
@@ -586,14 +616,14 @@ export default function DiagnosePage() {
                           const newVal = isSelected ? current.filter(id => id !== tool.id) : [...current, tool.id];
                           setValue('selectedTools', newVal);
                           trigger('selectedTools');
-                        }} className={cn("cursor-pointer p-6 rounded-[2.5rem] border-2 transition-all group relative", isSelected ? "border-cyan-500 bg-cyan-50/50 shadow-md" : "border-slate-100 bg-slate-50/30 hover:border-cyan-200")}>
+                        }} className={cn("cursor-pointer p-6 rounded-[2.5rem] border-2 transition-all group relative", isSelected ? "border-brand bg-brand/20 shadow-md" : "border-slate-100 bg-slate-50/30 hover:border-brand")}>
                           {isSelected && (
-                            <div className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-cyan-500 text-white rounded-full text-[10px] font-black shadow-lg shadow-cyan-200">
+                            <div className="absolute top-6 right-6 flex items-center gap-1.5 px-3 py-1 bg-brand text-white rounded-full text-[10px] font-black shadow-lg shadow-brand/20">
                               <Check className="w-3 h-3" strokeWidth={4} /> 選択中
                             </div>
                           )}
                           <div className="flex items-start gap-5">
-                            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-all", isSelected ? "bg-cyan-500 text-white shadow-lg" : "bg-white text-slate-400 border border-slate-100")}>
+                            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-all", isSelected ? "bg-brand text-white shadow-lg" : "bg-white text-slate-400 border border-slate-100")}>
                               {tool.id === 'chatgpt' && <MessageSquare className="w-8 h-8" />}
                               {tool.id === 'copilot' && <Briefcase className="w-8 h-8" />}
                               {tool.id === 'gemini' && <Zap className="w-8 h-8" />}
@@ -602,7 +632,7 @@ export default function DiagnosePage() {
                               <h3 className="font-black text-lg text-slate-800 mb-1">{tool.label}</h3>
                               <p className="text-sm text-slate-600 font-bold mb-3">{tool.description}</p>
                               <div className="flex flex-wrap gap-1.5">
-                                {TOOL_TAGS[tool.id].map(tag => <span key={tag} className={cn("px-2 py-0.5 rounded-lg text-[10px] font-black border", isSelected ? "bg-white text-cyan-600 border-cyan-100" : "bg-white/50 text-slate-400 border-slate-100")}>{tag}</span>)}
+                                {TOOL_TAGS[tool.id].map(tag => <span key={tag} className={cn("px-2 py-0.5 rounded-lg text-[10px] font-black border", isSelected ? "bg-white text-brand border-brand/20" : "bg-white/50 text-slate-400 border-slate-100")}>{tag}</span>)}
                               </div>
                             </div>
                           </div>
@@ -620,7 +650,7 @@ export default function DiagnosePage() {
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-white">
                   <h2 className="text-2xl font-black text-slate-800 mb-2 flex items-center gap-3">
-                    <span className="p-2.5 bg-blue-100 rounded-2xl"><Target className="text-blue-600 w-6 h-6" /></span>
+                    <span className="p-2.5 bg-brand/10 rounded-2xl"><Target className="text-brand w-6 h-6" /></span>
                     利用プランを選択
                   </h2>
                   <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
@@ -631,17 +661,17 @@ export default function DiagnosePage() {
                     {selectedTools.map(toolId => (
                       <div key={toolId} className="space-y-4">
                         <div className="flex flex-col gap-1">
-                          <h3 className="font-black text-xl text-slate-800 border-l-4 border-cyan-500 pl-3">{AI_TOOLS.find(t => t.id === toolId)?.label}</h3>
-                          {toolId === 'copilot' && <p className="text-[10px] font-bold text-blue-600 ml-4">※ Copilot Chat と Microsoft 365 Copilot では使える機能が異なります。</p>}
-                          {toolId === 'gemini' && <p className="text-[10px] font-bold text-blue-600 ml-4">※ Gemini Chat と Google Workspace連携機能では使える範囲が異なります。</p>}
+                          <h3 className="font-black text-xl text-slate-800 border-l-4 border-brand pl-3">{AI_TOOLS.find(t => t.id === toolId)?.label}</h3>
+                          {toolId === 'copilot' && <p className="text-[10px] font-bold text-brand ml-4">※ Copilot Chat と Microsoft 365 Copilot では使える機能が異なります。</p>}
+                          {toolId === 'gemini' && <p className="text-[10px] font-bold text-brand ml-4">※ Gemini Chat と Google Workspace連携機能では使える範囲が異なります。</p>}
                         </div>
                         <div className="grid grid-cols-1 gap-3">
                           {AI_PLANS_METADATA[toolId].map(plan => {
                             const isSelected = toolPlans[toolId] === plan.label;
                             return (
-                              <div key={plan.label} onClick={() => { setValue(`toolPlans.${toolId}`, plan.label); trigger(`toolPlans.${toolId}`); }} className={cn("cursor-pointer p-5 rounded-[2rem] border-2 transition-all flex flex-col gap-1", isSelected ? "bg-cyan-50 border-cyan-500 shadow-md" : "bg-slate-50 border-transparent hover:bg-slate-100 shadow-sm")}>
-                                <div className="flex justify-between items-center"><span className={cn("font-black text-base", isSelected ? "text-cyan-700" : "text-slate-700")}>{plan.label}</span>{isSelected && <CheckCircle2 className="w-5 h-5 text-cyan-500" />}</div>
-                                <p className="text-xs text-slate-500 font-bold">{plan.description}</p>
+                              <div key={plan.label} onClick={() => { setValue(`toolPlans.${toolId}`, plan.label); trigger(`toolPlans.${toolId}`); }} className={cn("cursor-pointer p-5 rounded-[2rem] border-2 transition-all flex flex-col gap-1", isSelected ? "bg-brand/10 border-brand shadow-md" : "bg-slate-50 border-transparent hover:bg-slate-100 shadow-sm")}>
+                                <div className="flex justify-between items-center"><span className={cn("font-black text-base", isSelected ? "text-brand" : "text-slate-700")}>{plan.label}</span>{isSelected && <CheckCircle2 className="w-5 h-5 text-brand" />}</div>
+                                <p className="text-xs text-slate-900 placeholder:text-slate-400">{plan.description}</p>
                               </div>
                             );
                           })}
@@ -658,8 +688,8 @@ export default function DiagnosePage() {
               <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="bg-white/70 backdrop-blur-md p-7 rounded-[2.5rem] border border-white shadow-sm">
                   <div className="flex justify-between items-center mb-5">
-                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><Wand2 className="w-4 h-4 text-cyan-500" />よくある業務から追加</h3>
-                    <button type="button" onClick={scrollToTasks} className="text-[10px] font-black text-cyan-600 flex items-center gap-1 hover:underline">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><Wand2 className="w-4 h-4 text-brand" />よくある業務から追加</h3>
+                    <button type="button" onClick={scrollToTasks} className="text-[10px] font-black text-brand flex items-center gap-1 hover:underline">
                       <MousePointer2 className="w-3 h-3" /> 追加した業務を編集する
                     </button>
                   </div>
@@ -675,8 +705,8 @@ export default function DiagnosePage() {
                           className={cn(
                             "px-4 py-2 border-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2",
                             isAdded 
-                              ? "bg-cyan-500 border-cyan-500 text-white shadow-md" 
-                              : "bg-white border-slate-50 text-slate-600 hover:border-cyan-300 hover:text-cyan-600"
+                              ? "bg-brand border-brand text-white shadow-md" 
+                              : "bg-white border-slate-50 text-slate-600 hover:border-brand hover:text-brand"
                           )}
                         >
                           {isAdded ? <Check className="w-3 h-3" strokeWidth={4} /> : <Plus className="w-3 h-3" />}
@@ -698,7 +728,7 @@ export default function DiagnosePage() {
                       <div className="space-y-8">
                         <div>
                           <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">業務名 <span className="text-orange-500">*</span></label>
-                          <input {...register(`tasks.${index}.title`)} aria-invalid={!!errors.tasks?.[index]?.title} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none font-bold", errors.tasks?.[index]?.title ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-cyan-400 focus:bg-white")} placeholder="例：週次の売上報告書作成" />
+                          <input {...register(`tasks.${index}.title`)} aria-invalid={!!errors.tasks?.[index]?.title} className={cn("w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none text-slate-900 placeholder:text-slate-400 font-bold", errors.tasks?.[index]?.title ? "border-orange-200 bg-orange-50/30" : "border-transparent focus:border-brand focus:bg-white")} placeholder="例：週次の売上報告書作成" />
                           <ErrorMsg message={errors.tasks?.[index]?.title?.message} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -728,7 +758,7 @@ export default function DiagnosePage() {
                             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest">主な成果物</label>
                             <span className="text-[9px] font-bold text-slate-400 italic">任意（入力推奨）</span>
                           </div>
-                          <div className="flex flex-wrap gap-2">{OUTPUTS.map(o => <Chip key={o} label={o} isSelected={watchedTasks[index]?.outputs?.includes(o)} color="blue" onClick={() => {
+                          <div className="flex flex-wrap gap-2">{OUTPUTS.map(o => <Chip key={o} label={o} isSelected={watchedTasks[index]?.outputs?.includes(o)} color="brand" onClick={() => {
                             const current = watchedTasks[index].outputs || [];
                             setValue(`tasks.${index}.outputs`, current.includes(o) ? current.filter(x => x !== o) : [...current, o]);
                             trigger(`tasks.${index}.otherOutputText`);
@@ -739,7 +769,7 @@ export default function DiagnosePage() {
                                 <input 
                                   {...register(`tasks.${index}.otherOutputText`)}
                                   aria-invalid={!!errors.tasks?.[index]?.otherOutputText}
-                                  className={cn("w-full p-4 bg-blue-50/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.tasks?.[index]?.otherOutputText ? "border-orange-200" : "border-blue-100 focus:border-blue-400")}
+                                  className={cn("w-full p-4 bg-brand/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.tasks?.[index]?.otherOutputText ? "border-orange-200" : "border-brand/20 focus:border-brand")}
                                   placeholder="例：契約書、申請書、社内FAQなど"
                                 />
                                 <ErrorMsg message={errors.tasks?.[index]?.otherOutputText?.message} />
@@ -755,7 +785,7 @@ export default function DiagnosePage() {
                           <div className="flex flex-wrap gap-2">
                             {['Office', 'Google WS', 'Slack', 'Teams', 'Notion', 'その他'].map(tool => {
                               const isSelected = watchedTasks[index]?.tools?.includes(tool);
-                              return <Chip key={tool} label={tool} isSelected={isSelected} color="cyan" onClick={() => {
+                              return <Chip key={tool} label={tool} isSelected={isSelected} color="brand" onClick={() => {
                                 const current = watchedTasks[index].tools || [];
                                 setValue(`tasks.${index}.tools`, isSelected ? current.filter(t => t !== tool) : [...current, tool]);
                                 trigger(`tasks.${index}.otherToolsText`);
@@ -768,7 +798,7 @@ export default function DiagnosePage() {
                                 <input 
                                   {...register(`tasks.${index}.otherToolsText`)}
                                   aria-invalid={!!errors.tasks?.[index]?.otherToolsText}
-                                  className={cn("w-full p-4 bg-cyan-50/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.tasks?.[index]?.otherToolsText ? "border-orange-200" : "border-cyan-100 focus:border-cyan-400")}
+                                  className={cn("w-full p-4 bg-brand/30 border-2 rounded-2xl outline-none font-bold text-sm", errors.tasks?.[index]?.otherToolsText ? "border-orange-200" : "border-brand/20 focus:border-brand")}
                                   placeholder="例：Salesforce、kintone、独自ツールなど"
                                 />
                                 <ErrorMsg message={errors.tasks?.[index]?.otherToolsText?.message} />
@@ -807,7 +837,7 @@ export default function DiagnosePage() {
                       </div>
                     </motion.div>
                   ))}
-                  <button type="button" onClick={() => addSuggestedTask()} className="w-full p-8 rounded-[3rem] border-4 border-dashed border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/30 transition-all flex flex-col items-center gap-3">
+                  <button type="button" onClick={() => addSuggestedTask()} className="w-full p-8 rounded-[3rem] border-4 border-dashed border-slate-200 hover:border-brand hover:bg-brand/30 transition-all flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-slate-300 shadow-sm"><Plus className="w-6 h-6" /></div>
                     <div className="text-center"><p className="text-base font-black text-slate-800">＋ 業務を1つ追加する</p><p className="text-[10px] font-bold text-slate-400 mt-1">最大10件まで登録できます。</p></div>
                   </button>
@@ -820,7 +850,7 @@ export default function DiagnosePage() {
               <motion.div key="step5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-8">
                 <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white">
                   <div className="text-center mb-12">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-cyan-50 text-cyan-600 rounded-full text-[11px] font-black tracking-widest mb-4 uppercase">最終確認</div>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand/10 text-brand rounded-full text-[11px] font-black tracking-widest mb-4 uppercase">最終確認</div>
                     <h2 className="text-3xl font-black text-slate-900 mb-4">診断前の最終チェック</h2>
                     <p className="text-slate-500 font-bold leading-relaxed">以下の内容で診断レポートを作成します。<br />内容に誤りがないか確認してください。</p>
                   </div>
@@ -829,14 +859,14 @@ export default function DiagnosePage() {
                     {/* 基本情報 */}
                     <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
                       <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 bg-cyan-400 rounded-full" />基本情報</h3>
-                        <button type="button" onClick={() => setStep(1)} className="text-[10px] font-black text-cyan-600 hover:underline flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> 基本情報を修正</button>
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 bg-brand rounded-full" />基本情報</h3>
+                        <button type="button" onClick={() => { setStep(1); setIsEditingFromConfirm(true); }} className="text-[10px] font-black text-brand hover:underline flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> 基本情報を修正</button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm font-bold text-slate-700">
                         <p><span className="text-slate-400 font-black mr-2 italic">氏名:</span> {basicInfo.name}</p>
                         <p><span className="text-slate-400 font-black mr-2 italic">会社名:</span> {basicInfo.companyName}</p>
                         <p><span className="text-slate-400 font-black mr-2 italic">部署名:</span> {basicInfo.departmentName || <span className="text-slate-300 font-normal">未選択</span>}</p>
-                        <p><span className="text-slate-400 font-black mr-2 italic">業種:</span> {basicInfo.industry}</p>
+                        <p><span className="text-slate-400 font-black mr-2 italic">業種:</span> {basicInfo.industry === 'その他' ? `その他 (${basicInfo.otherIndustryText})` : basicInfo.industry}</p>
                         <p><span className="text-slate-400 font-black mr-2 italic">規模:</span> {basicInfo.companySize}</p>
                         <p><span className="text-slate-400 font-black mr-2 italic">役職:</span> {basicInfo.role === 'その他' ? `その他 (${basicInfo.otherRoleText})` : basicInfo.role}</p>
                         <p><span className="text-slate-400 font-black mr-2 italic">経験:</span> {basicInfo.aiExperience}</p>
@@ -860,14 +890,14 @@ export default function DiagnosePage() {
                     {/* AIツール */}
                     <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
                       <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 bg-cyan-400 rounded-full" />AIツール・プラン</h3>
-                        <button type="button" onClick={() => setStep(2)} className="text-[10px] font-black text-cyan-600 hover:underline flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> AIツールを修正</button>
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 bg-brand rounded-full" />AIツール・プラン</h3>
+                        <button type="button" onClick={() => { setStep(2); setIsEditingFromConfirm(true); }} className="text-[10px] font-black text-brand hover:underline flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> AIツールを修正</button>
                       </div>
                       <div className="flex flex-wrap gap-3">
                         {selectedTools.map(id => (
                           <div key={id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                             <p className="text-sm font-black text-slate-800">{AI_TOOLS.find(t => t.id === id)?.label}</p>
-                            <p className="text-[10px] font-bold text-cyan-600 mt-1">{toolPlans[id]}</p>
+                            <p className="text-[10px] font-bold text-brand mt-1">{toolPlans[id]}</p>
                           </div>
                         ))}
                       </div>
@@ -876,8 +906,8 @@ export default function DiagnosePage() {
                     {/* 業務情報 */}
                     <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
                       <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 bg-cyan-400 rounded-full" />登録業務 ({watchedTasks.length}件)</h3>
-                        <button type="button" onClick={() => setStep(4)} className="text-[10px] font-black text-cyan-600 hover:underline flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> 業務内容を修正</button>
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 bg-brand rounded-full" />登録業務 ({watchedTasks.length}件)</h3>
+                        <button type="button" onClick={() => { setStep(4); setIsEditingFromConfirm(true); }} className="text-[10px] font-black text-brand hover:underline flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> 業務内容を修正</button>
                       </div>
                       <div className="space-y-4">
                         {watchedTasks.map((task, i) => (
@@ -920,15 +950,15 @@ export default function DiagnosePage() {
                     </div>
 
                     {/* 診断メリット */}
-                    <div className="bg-cyan-600 p-10 rounded-[3rem] text-white shadow-xl shadow-cyan-100">
+                    <div className="bg-brand p-10 rounded-[3rem] text-white shadow-xl shadow-brand/20">
                       <h4 className="text-xl font-black mb-8 flex items-center gap-2"><BarChart3 className="w-6 h-6" /> 診断後にわかること</h4>
                       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {[
                           '業務別のAI活用可能性', '月間・年間の削減インパクト', 'おすすめAIツール',
                           '注意が必要な業務', '明日から試せるアクション', 'そのまま使えるプロンプト例'
                         ].map((item, i) => (
-                          <li key={i} className="flex items-center gap-3 text-sm font-bold text-cyan-50">
-                            <CheckCircle2 className="w-5 h-5 text-cyan-200" /> {item}
+                          <li key={i} className="flex items-center gap-3 text-sm font-bold text-white/90">
+                            <CheckCircle2 className="w-5 h-5 text-white" /> {item}
                           </li>
                         ))}
                       </ul>
@@ -956,13 +986,13 @@ export default function DiagnosePage() {
           <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent backdrop-blur-sm z-40">
             <div className="max-w-2xl mx-auto flex gap-4">
               {step > 1 && (
-                <button type="button" onClick={prevStep} className="flex-1 py-5 px-6 bg-white border-2 border-slate-100 text-slate-400 rounded-3xl font-black flex items-center justify-center gap-2 hover:border-cyan-200 hover:text-cyan-600 transition-all shadow-lg active:scale-95">
+                <button type="button" onClick={prevStep} className="flex-1 py-5 px-6 bg-white border-2 border-slate-100 text-slate-400 rounded-3xl font-black flex items-center justify-center gap-2 hover:border-brand/20 hover:text-brand transition-all shadow-lg active:scale-95">
                   <ChevronLeft className="w-5 h-5" /> 戻る
                 </button>
               )}
               {step < 5 ? (
                 <button type="button" onClick={handleNext} className="flex-[2] py-5 px-6 bg-slate-900 text-white rounded-3xl font-black flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-2xl active:scale-95">
-                  {step === 4 ? '入力内容を確認する' : '次へ進む'} <ChevronRight className="w-6 h-6" />
+                  {isEditingFromConfirm ? '確認画面に戻る' : (step === 4 ? '入力内容を確認する' : '次へ進む')} <ChevronRight className="w-6 h-6" />
                 </button>
               ) : (
                 <button 
@@ -973,7 +1003,7 @@ export default function DiagnosePage() {
                     "flex-[2] py-5 px-6 rounded-3xl font-black flex items-center justify-center gap-3 transition-all shadow-2xl active:scale-95",
                     isGenerating 
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
-                      : "bg-cyan-600 text-white hover:bg-cyan-700 shadow-cyan-200"
+                      : "bg-brand text-white hover:bg-cyan-700 shadow-cyan-200"
                   )}
                 >
                   {isGenerating ? (
@@ -1009,17 +1039,17 @@ export default function DiagnosePage() {
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-slate-50">
                 <motion.div 
-                  className="h-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                  className="h-full bg-brand"
                   initial={{ width: "0%" }}
                   animate={{ width: `${(generationStep / 5) * 100}%` }}
                 />
               </div>
 
               <div className="text-center mb-10">
-                <div className="w-20 h-20 bg-cyan-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 relative">
-                  <Sparkles className="w-10 h-10 text-cyan-600 animate-pulse" />
+                <div className="w-20 h-20 bg-brand/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 relative">
+                  <Sparkles className="w-10 h-10 text-brand animate-pulse" />
                   <motion.div 
-                    className="absolute inset-0 border-4 border-cyan-400 rounded-[2rem]"
+                    className="absolute inset-0 border-4 border-brand rounded-[2rem]"
                     animate={{ scale: [1, 1.2, 1], opacity: [1, 0, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
@@ -1041,8 +1071,8 @@ export default function DiagnosePage() {
                   <div key={s.id} className="flex items-center gap-4">
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500",
-                      generationStep > s.id ? "bg-cyan-500 border-cyan-500 text-white shadow-md" :
-                      generationStep === s.id ? "border-cyan-500 text-cyan-500 animate-pulse" :
+                      generationStep > s.id ? "bg-brand border-brand text-white shadow-md" :
+                      generationStep === s.id ? "border-brand text-brand animate-pulse" :
                       "border-slate-100 text-slate-200"
                     )}>
                       {generationStep > s.id ? <Check className="w-5 h-5" strokeWidth={4} /> : <span className="text-xs font-black">{s.id}</span>}
@@ -1050,7 +1080,7 @@ export default function DiagnosePage() {
                     <p className={cn(
                       "text-sm font-black transition-all duration-500",
                       generationStep > s.id ? "text-slate-400" :
-                      generationStep === s.id ? "text-cyan-600" :
+                      generationStep === s.id ? "text-brand" :
                       "text-slate-200"
                     )}>
                       {s.text}
@@ -1062,9 +1092,9 @@ export default function DiagnosePage() {
                         className="ml-auto"
                       >
                         <div className="flex gap-1">
-                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                          <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" />
+                          <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" />
                         </div>
                       </motion.div>
                     )}

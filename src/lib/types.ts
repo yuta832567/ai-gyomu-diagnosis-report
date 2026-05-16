@@ -43,6 +43,7 @@ export interface BasicInfo {
   role: Role;
   otherRoleText?: string;
   industry: string;
+  otherIndustryText?: string;
   companySize: CompanySize;
   aiExperience: AIExperience;
   aiUsageFrequency: AIUsageFrequency;
